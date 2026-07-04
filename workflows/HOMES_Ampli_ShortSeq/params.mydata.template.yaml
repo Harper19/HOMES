@@ -1,0 +1,11 @@
+input: "workflows/HOMES_Ampli_ShortSeq/samplesheet.csv"
+outdir: "results/HOMES_Ampli_ShortSeq"
+
+# Example 16S V4 primers. Replace with the true primers for your data.
+FW_primer: "GTGYCAGCMGCCGCGGTAA"
+RV_primer: "GGACTACNVGGGTWTCTAAT"
+
+# Adjust using FastQC/MultiQC quality profiles.
+trunclenf: 240
+trunclenr: 220
+

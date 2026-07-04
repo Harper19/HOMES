@@ -1,0 +1,6 @@
+outdir: "results/HOMES_Ampli_ShortSeq_test"
+
+# Explicit DADA2 truncation cutoffs for the nf-core/ampliseq test run.
+trunclenf: 230
+trunclenr: 229
+

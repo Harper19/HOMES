@@ -1,0 +1,4 @@
+sample,fastq_1,fastq_2
+S1,/absolute/path/to/S1_R1_001.fastq.gz,/absolute/path/to/S1_R2_001.fastq.gz
+S2,/absolute/path/to/S2_R1_001.fastq.gz,/absolute/path/to/S2_R2_001.fastq.gz
+

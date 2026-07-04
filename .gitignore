@@ -1,0 +1,38 @@
+# Nextflow runtime
+work/
+.nextflow/
+.nextflow.log*
+
+# Analysis outputs
+results/
+results_*/
+reports/
+logs/
+
+# Large sequencing data
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+*.bam
+*.sam
+*.cram
+
+# Large references and databases
+references/
+databases/
+*.fa
+*.fasta
+*.fna
+*.bt2
+*.bt2l
+
+# Temporary files
+tmp/
+*.tmp
+*.log
+
+# OS/editor
+.DS_Store
+.vscode/
+
