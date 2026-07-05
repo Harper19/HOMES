@@ -1,6 +1,5 @@
 sample,workflow,assay,platform,read_layout,fastq_1,fastq_2,primer_f,primer_r,host_ref,run_rd_rq
-S1,HOMES_Ampli_ShortSeq,amplicon,illumina,paired,/absolute/path/S1_R1.fastq.gz,/absolute/path/S1_R2.fastq.gz,GTGYCAGCMGCCGCGGTAA,GGACTACNVGGGTWTCTAAT,,true
-S2,HOMES_Meta_ShortSeq,metagenome,illumina,paired,/absolute/path/S2_R1.fastq.gz,/absolute/path/S2_R2.fastq.gz,,,/absolute/path/human.fa,true
-S3,HOMES_Ampli_LongSeq,amplicon,nanopore,single,/absolute/path/S3.fastq.gz,,27F,1492R,,true
-S4,HOMES_Meta_LongSeq,metagenome,nanopore,single,/absolute/path/S4.fastq.gz,,,,/absolute/path/human.fa,false
-
+S1,HOMES_amplicon,amplicon,illumina,paired,/absolute/path/S1_R1.fastq.gz,/absolute/path/S1_R2.fastq.gz,GTGYCAGCMGCCGCGGTAA,GGACTACNVGGGTWTCTAAT,,true
+S2,HOMES_metagenomics,metagenome,illumina,paired,/absolute/path/S2_R1.fastq.gz,/absolute/path/S2_R2.fastq.gz,,,/absolute/path/human.fa,true
+S3,HOMES_amplicon,amplicon,nanopore,single,/absolute/path/S3.fastq.gz,,27F,1492R,,true
+S4,HOMES_metagenomics,metagenome,nanopore,single,/absolute/path/S4.fastq.gz,,,,/absolute/path/human.fa,false

@@ -2,11 +2,11 @@
 
 ## First Commit
 
-From `/Users/kbian8/Documents/nextflow_work/HOMES`:
+From the HOMES repository root:
 
 ```bash
 git init
-git add README.md .gitignore commands.md nextflow.config docs workflows samplesheets scripts modules configs assets envs tests
+git add README.md .gitignore commands.md nextflow.config docs workflows samplesheets
 git commit -m "Initialize HOMES microbiome workflow project"
 ```
 
@@ -35,4 +35,3 @@ git diff --cached --stat
 ```
 
 Do not commit raw sequencing files, `work/`, `results/`, or reference databases.
-

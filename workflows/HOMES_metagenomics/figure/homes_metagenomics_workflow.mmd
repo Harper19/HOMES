@@ -1,0 +1,26 @@
+flowchart TD
+    A["HOMES_metagenomics samplesheet"] --> B{"--platform"}
+
+    B -->|"illumina"| I1["Illumina short-read branch"]
+    B -->|"nanopore"| N1["Nanopore long-read branch"]
+
+    I1 --> I2["Read QC<br/>FastQC / fastp"]
+    I2 --> I3["Optional host filtering"]
+    I3 --> I4["Taxonomy<br/>Kraken2"]
+    I4 --> I5["Abundance<br/>Bracken / merged abundance tables"]
+
+    N1 --> N2["Read QC<br/>Read length / read quality"]
+    N2 --> N3["Optional host filtering<br/>Minimap2"]
+    N3 --> N4{"Classifier"}
+    N4 -->|"Kraken2"| N5["Kraken2 taxonomy<br/>Bracken abundance"]
+    N4 -->|"Minimap2"| N6["Minimap2 taxonomy<br/>alignment summaries"]
+    N5 --> N7["Nanopore abundance tables"]
+    N6 --> N7
+
+    I5 --> O1["HOMES_metagenomics results"]
+    N7 --> O1
+
+    O1 --> Q["qc/"]
+    O1 --> T["taxonomy/"]
+    O1 --> AB["abundance/"]
+    O1 --> R["report/<br/>HTML summary"]

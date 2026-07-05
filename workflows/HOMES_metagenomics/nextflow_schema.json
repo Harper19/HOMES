@@ -1,0 +1,139 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/Harper19/HOMES/workflows/HOMES_metagenomics/nextflow_schema.json",
+    "title": "HOMES_metagenomics pipeline parameters",
+    "description": "Shotgun metagenomics workflow parameters for HOMES.",
+    "type": "object",
+    "definitions": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "required": ["input"],
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the HOMES metagenomics samplesheet CSV."
+                },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "default": "results/HOMES_metagenomics",
+                    "description": "Output directory."
+                }
+            }
+        },
+        "platform_options": {
+            "title": "Platform options",
+            "type": "object",
+            "properties": {
+                "platform": {
+                    "type": "string",
+                    "default": "illumina",
+                    "enum": ["illumina", "nanopore"],
+                    "description": "Sequencing platform branch to run."
+                }
+            }
+        },
+        "taxonomy_options": {
+            "title": "Taxonomy and abundance options",
+            "type": "object",
+            "properties": {
+                "classifier": {
+                    "type": "string",
+                    "default": "kraken2",
+                    "enum": ["kraken2", "minimap2"],
+                    "description": "Taxonomic classifier. Minimap2 is planned for Nanopore custom references."
+                },
+                "taxonomic_rank": {
+                    "type": "string",
+                    "default": "S",
+                    "enum": ["S", "G", "F", "O", "C", "P"],
+                    "description": "Taxonomic rank used for abundance summaries."
+                },
+                "kraken2_db": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Path to a Kraken2 database."
+                },
+                "database_set": {
+                    "type": "string",
+                    "default": "Standard-8",
+                    "enum": ["Standard-8", "PlusPF-8", "PlusPFP-8", "ncbi_16s_18s", "ncbi_16s_18s_28s_ITS", "SILVA_138_1", "Greengenes2_plus"],
+                    "description": "Preset database set. Resolved to database/taxonomy/reference URLs when explicit database paths are not supplied."
+                },
+                "bracken_db": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Path to a Bracken database. Defaults to kraken2_db when omitted."
+                },
+                "taxonomy": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to a local taxonomy archive or directory."
+                },
+                "database_url": {
+                    "type": "string",
+                    "description": "Override URL to a Kraken2/Bracken database archive. Downloaded into store_dir on first use."
+                },
+                "taxonomy_url": {
+                    "type": "string",
+                    "description": "Override URL to a taxonomy archive. Downloaded into store_dir on first use."
+                },
+                "database_name": {
+                    "type": "string",
+                    "description": "Stable local cache folder name for database_url downloads."
+                },
+                "reference": {
+                    "type": "string",
+                    "description": "Local reference path or preset-resolved reference URL for Minimap2-style classification."
+                },
+                "ref2taxid": {
+                    "type": "string",
+                    "description": "Local ref2taxid path or preset-resolved ref2taxid URL for Minimap2-style classification."
+                },
+                "store_dir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "default": "~/.homes/metagenomics",
+                    "description": "Persistent database cache directory. Override with --store_dir for a shared cache."
+                },
+                "download_databases": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Allow automatic database download when database_url is provided and no completed cache exists."
+                },
+                "bracken": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Estimate abundance with Bracken after Kraken2."
+                }
+            }
+        },
+        "report_options": {
+            "title": "Report options",
+            "type": "object",
+            "properties": {
+                "skip_report": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip HOMES HTML report creation."
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/platform_options"
+        },
+        {
+            "$ref": "#/definitions/taxonomy_options"
+        },
+        {
+            "$ref": "#/definitions/report_options"
+        }
+    ]
+}

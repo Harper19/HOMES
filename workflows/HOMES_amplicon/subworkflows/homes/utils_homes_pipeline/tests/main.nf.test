@@ -1,0 +1,29 @@
+nextflow_workflow {
+
+    name "Test Workflow UTILS_HOMES_PIPELINE"
+    script "../main.nf"
+    config "subworkflows/homes/utils_homes_pipeline/tests/nextflow.config"
+    workflow "UTILS_HOMES_PIPELINE"
+    tag "subworkflows"
+    tag "subworkflows_homes"
+    tag "utils_homes_pipeline"
+    tag "subworkflows/utils_homes_pipeline"
+
+    test("Should run without failures") {
+
+        when {
+            workflow {
+                """
+                input[0] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match() }
+            )
+        }
+    }
+}

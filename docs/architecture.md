@@ -2,7 +2,7 @@
 
 ## Design Goal
 
-HOMES should become one coherent GitHub repository that organizes multiple microbiome analysis modes while keeping each branch independently testable.
+HOMES (**Harmonizing 'Omics for Managing Environmental Systems**) is organized as one coherent GitHub repository with two independently testable wastewater microbiome workflow modules.
 
 ## Workflow Families
 
@@ -15,11 +15,10 @@ input validation
   v
 workflow selection
   |
-  +-- HOMES_Ampli_ShortSeq
-  +-- HOMES_Ampli_LongSeq
-  +-- HOMES_Meta_ShortSeq
-  +-- HOMES_Meta_LongSeq
-  +-- HOMES_rD_rQ
+  +-- HOMES_amplicon (--platform short)
+  +-- HOMES_amplicon (--platform nanopore)
+  +-- HOMES_metagenomics (--platform illumina)
+  +-- HOMES_metagenomics (--platform nanopore)
   |
   v
 standardized outputs
@@ -36,16 +35,29 @@ Use mature external pipelines when they are reliable, but keep HOMES-specific ch
 - run scripts
 - parameter files
 - project documentation
-- custom rD+rQ scripts
 - custom Nextflow modules
 
-## Why Not Copy All nf-core Code?
+## Amplicon Integration
 
-Copying all of `nf-core/ampliseq` makes future updates difficult. The cleaner first step is to call a pinned version:
+The amplicon branch is now integrated into one Nextflow entry point:
 
 ```bash
-nextflow run nf-core/ampliseq -r 2.18.0
+nextflow run workflows/HOMES_amplicon --platform short
+nextflow run workflows/HOMES_amplicon --platform nanopore
 ```
 
-If HOMES later needs deep internal changes, fork or vendor the relevant workflow deliberately.
+Short-read and Nanopore amplicon analyses share project-level documentation and output conventions while keeping platform-specific assumptions separate.
 
+## Metagenomics Integration
+
+The metagenomics branch follows the same single-entry-point pattern:
+
+```bash
+nextflow run workflows/HOMES_metagenomics --platform illumina
+nextflow run workflows/HOMES_metagenomics --platform nanopore
+```
+
+The public HOMES output contract is:
+
+- `qc/` for read quality and preprocessing summaries.
+- `taxonomy/` for classifier reports and per-sample taxonomy tables.

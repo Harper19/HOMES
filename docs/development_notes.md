@@ -2,11 +2,10 @@
 
 ## Recommended Order
 
-1. Keep `HOMES_Ampli_ShortSeq` running through `nf-core/ampliseq`.
+1. Keep `HOMES_amplicon` as the single amplicon entry point.
 2. Add real HOMES samplesheet and parameter templates.
-3. Add custom rD+rQ scripts under `scripts/rd_rq/`.
-4. Wrap rD+rQ as a Nextflow module under `modules/local/`.
-5. Add long-read amplicon and metagenomic branches one at a time.
+3. Keep `HOMES_metagenomics` as the single shotgun metagenomics entry point.
+4. Add metagenomics modules in this order: QC, host filtering, taxonomy, abundance normalization, HTML report.
 
 ## Script Rules
 
@@ -16,4 +15,3 @@ Scripts should:
 - avoid hard-coded absolute paths
 - write clear output files
 - print package/software versions where useful
-
