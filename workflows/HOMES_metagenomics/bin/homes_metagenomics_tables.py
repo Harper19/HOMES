@@ -54,9 +54,71 @@ def open_maybe_gzip(path):
     return path.open()
 
 
+def n50(lengths):
+    if not lengths:
+        return 0
+    half_total = sum(lengths) / 2
+    running = 0
+    for length in sorted(lengths, reverse=True):
+        running += length
+        if running >= half_total:
+            return length
+    return 0
+
+
+def length_bin_size(max_length):
+    if max_length <= 500:
+        return 25
+    if max_length <= 2000:
+        return 100
+    if max_length <= 10000:
+        return 500
+    return 1000
+
+
+def binned_lengths(lengths):
+    if not lengths:
+        return []
+    bin_size = length_bin_size(max(lengths))
+    counts = {}
+    for length in lengths:
+        start = (length // bin_size) * bin_size
+        counts[start] = counts.get(start, 0) + 1
+    total = len(lengths)
+    return [
+        {
+            "length_bin_start": start,
+            "length_bin_end": start + bin_size - 1,
+            "read_count": count,
+            "fraction": round(count / total, 6),
+        }
+        for start, count in sorted(counts.items())
+    ]
+
+
+def binned_qvalues(read_mean_qualities):
+    if not read_mean_qualities:
+        return []
+    counts = {}
+    for qvalue in read_mean_qualities:
+        q_bin = int(qvalue)
+        counts[q_bin] = counts.get(q_bin, 0) + 1
+    total = len(read_mean_qualities)
+    return [
+        {
+            "q_bin": q_bin,
+            "read_count": count,
+            "fraction": round(count / total, 6),
+        }
+        for q_bin, count in sorted(counts.items())
+    ]
+
+
 def fastq_stats(paths):
     read_lengths = []
-    quality_values = []
+    read_mean_qualities = []
+    quality_sum = 0
+    quality_count = 0
 
     for raw_path in paths:
         if not raw_path:
@@ -66,6 +128,8 @@ def fastq_stats(paths):
             record_line = 0
             header = sequence = plus = quality = None
             for line_number, line in enumerate(handle, start=1):
+                if isinstance(line, bytes):
+                    line = line.decode()
                 value = line.rstrip("\n")
                 record_line = (line_number - 1) % 4
                 if record_line == 0:
@@ -84,8 +148,11 @@ def fastq_stats(paths):
                         raise ValueError(
                             f"{path_label}: sequence and quality lengths differ near line {line_number}"
                         )
+                    q_values = [ord(char) - 33 for char in quality]
                     read_lengths.append(len(sequence))
-                    quality_values.extend(ord(char) - 33 for char in quality)
+                    read_mean_qualities.append(mean(q_values) if q_values else 0)
+                    quality_sum += sum(q_values)
+                    quality_count += len(q_values)
 
             if record_line != 3:
                 raise ValueError(f"{path_label}: incomplete FASTQ record at end of file")
@@ -96,7 +163,10 @@ def fastq_stats(paths):
             "mean_read_length": 0,
             "min_read_length": 0,
             "max_read_length": 0,
+            "n50_read_length": 0,
             "mean_read_quality": 0,
+            "length_distribution": [],
+            "qvalue_distribution": [],
         }
 
     return {
@@ -104,36 +174,39 @@ def fastq_stats(paths):
         "mean_read_length": round(mean(read_lengths), 2),
         "min_read_length": min(read_lengths),
         "max_read_length": max(read_lengths),
-        "mean_read_quality": round(mean(quality_values), 2),
+        "n50_read_length": n50(read_lengths),
+        "mean_read_quality": round(quality_sum / quality_count, 2) if quality_count else 0,
+        "length_distribution": binned_lengths(read_lengths),
+        "qvalue_distribution": binned_qvalues(read_mean_qualities),
     }
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Create HOMES metagenomics normalized scaffold tables.")
+    parser = argparse.ArgumentParser(description="Create HOMES metagenomics read QC tables.")
     parser.add_argument("--samplesheet", required=True)
     parser.add_argument("--platform", required=True, choices=["illumina", "nanopore"])
     parser.add_argument("--qc", required=True)
-    parser.add_argument("--taxonomy", required=True)
-    parser.add_argument("--abundance", required=True)
-    parser.add_argument("--relative_abundance", required=True)
+    parser.add_argument("--length_distribution", required=True)
+    parser.add_argument("--qvalue_distribution", required=True)
     args = parser.parse_args()
 
     samples = read_samples(args.samplesheet)
 
     qc_rows = []
-    taxonomy_rows = []
-    abundance_rows = []
-    relative_rows = []
+    length_distribution_rows = []
+    qvalue_distribution_rows = []
 
-    for index, sample in enumerate(samples, start=1):
+    for sample in samples:
         sample_name = sample["sample"]
         read_layout = sample["read_layout"]
         host_filtering = "planned" if sample.get("host_ref") else "not_configured"
-        analysis_design = "nanopore_long_read_metagenomics" if args.platform == "nanopore" else "illumina_short_read_metagenomics"
+        analysis_design = (
+            "nanopore_long_read_metagenomics"
+            if args.platform == "nanopore"
+            else "illumina_short_read_metagenomics"
+        )
         read_stats = fastq_stats([sample.get("fastq_1"), sample.get("fastq_2")])
-        classifier = "kraken2"
         total_reads = read_stats["total_reads"]
-        assigned_reads = int(total_reads * 0.8)
 
         qc_rows.append(
             {
@@ -149,46 +222,47 @@ def main():
                 "mean_read_length": read_stats["mean_read_length"],
                 "min_read_length": read_stats["min_read_length"],
                 "max_read_length": read_stats["max_read_length"],
+                "n50_read_length": read_stats["n50_read_length"],
                 "mean_read_quality": read_stats["mean_read_quality"],
             }
         )
 
-        taxonomy_rows.append(
-            {
-                "sample": sample_name,
-                "classifier": classifier,
-                "rank": "species",
-                "taxid": "562",
-                "taxon": "Escherichia coli",
-                "assigned_reads": assigned_reads,
-                "source_report": "pending_real_classifier_report",
-            }
-        )
+        for row in read_stats["length_distribution"]:
+            length_distribution_rows.append({"sample": sample_name, **row})
 
-        abundance_rows.append(
-            {
-                "sample": sample_name,
-                "rank": "species",
-                "taxid": "562",
-                "taxon": "Escherichia coli",
-                "reads": assigned_reads,
-            }
-        )
+        for row in read_stats["qvalue_distribution"]:
+            qvalue_distribution_rows.append({"sample": sample_name, **row})
 
-        relative_rows.append(
-            {
-                "sample": sample_name,
-                "rank": "species",
-                "taxid": "562",
-                "taxon": "Escherichia coli",
-                "relative_abundance": assigned_reads / total_reads,
-            }
-        )
-
-    write_tsv(args.qc, ["sample", "platform", "read_layout", "analysis_design", "input_1", "input_2", "host_filtering", "total_reads", "analysis_ready_reads", "mean_read_length", "min_read_length", "max_read_length", "mean_read_quality"], qc_rows)
-    write_tsv(args.taxonomy, ["sample", "classifier", "rank", "taxid", "taxon", "assigned_reads", "source_report"], taxonomy_rows)
-    write_tsv(args.abundance, ["sample", "rank", "taxid", "taxon", "reads"], abundance_rows)
-    write_tsv(args.relative_abundance, ["sample", "rank", "taxid", "taxon", "relative_abundance"], relative_rows)
+    write_tsv(
+        args.qc,
+        [
+            "sample",
+            "platform",
+            "read_layout",
+            "analysis_design",
+            "input_1",
+            "input_2",
+            "host_filtering",
+            "total_reads",
+            "analysis_ready_reads",
+            "mean_read_length",
+            "min_read_length",
+            "max_read_length",
+            "n50_read_length",
+            "mean_read_quality",
+        ],
+        qc_rows,
+    )
+    write_tsv(
+        args.length_distribution,
+        ["sample", "length_bin_start", "length_bin_end", "read_count", "fraction"],
+        length_distribution_rows,
+    )
+    write_tsv(
+        args.qvalue_distribution,
+        ["sample", "q_bin", "read_count", "fraction"],
+        qvalue_distribution_rows,
+    )
 
 
 if __name__ == "__main__":

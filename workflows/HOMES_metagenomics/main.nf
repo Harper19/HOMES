@@ -18,6 +18,11 @@ workflow {
         error "Missing required parameter: --input"
     }
 
+    classifier = (params.classifier ?: 'kraken2').toString().toLowerCase()
+    if (classifier != 'kraken2') {
+        error "HOMES_metagenomics currently implements --classifier kraken2. The requested classifier '${params.classifier}' is not wired yet."
+    }
+
     if (platform == 'illumina') {
         HOMES_METAGENOMICS_ILLUMINA()
     } else {

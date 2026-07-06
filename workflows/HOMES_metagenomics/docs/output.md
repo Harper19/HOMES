@@ -9,16 +9,18 @@ qc/
   <platform>.qc.summary.tsv
 ```
 
-Nanopore QC records long-read read statistics. Illumina QC records short-read preprocessing and quality summaries. The HOMES QC table includes total reads, analysis-ready reads, mean/min/max read length, and mean read quality.
+Nanopore QC records long-read read statistics. Illumina QC records short-read preprocessing and quality summaries. The HOMES QC table includes total reads, analysis-ready reads, mean/min/max read length, N50 read length, and mean read quality.
 
 ## Taxonomy
 
 ```text
 taxonomy/
   <platform>.taxonomy.tsv
+  <sample>.kraken2.report
+  <sample>.kraken2.output
 ```
 
-Nanopore taxonomy supports Kraken2 or Minimap2 classifier branches. Illumina taxonomy starts with Kraken2 classifier outputs.
+Nanopore and Illumina taxonomy currently use Kraken2 classifier outputs.
 
 ## Abundance
 
@@ -26,9 +28,11 @@ Nanopore taxonomy supports Kraken2 or Minimap2 classifier branches. Illumina tax
 abundance/
   <platform>.abundance.tsv
   <platform>.relative_abundance.tsv
+  <sample>.bracken.tsv
+  <sample>.bracken.report
 ```
 
-Nanopore and Illumina abundance outputs provide merged count and relative abundance tables, with Bracken support for Kraken2 classifications.
+Nanopore and Illumina abundance outputs provide merged count and relative abundance tables from the Kraken2 report. Bracken outputs are also published when `--bracken true`.
 
 ## Report
 

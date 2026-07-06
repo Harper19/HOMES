@@ -4,8 +4,8 @@ Unified shotgun metagenomics workflow entry point for HOMES (**Harmonizing 'Omic
 
 ## Platform Design
 
-- `--platform nanopore`: Nanopore FASTQ/BAM-oriented metagenomics, including read QC, optional host removal, Kraken2 or Minimap2 classification, Bracken abundance estimation, and an HTML report.
-- `--platform illumina`: short-read metagenomics, including read QC/preprocessing, host-removal-ready inputs, Kraken2/Bracken taxonomy and abundance outputs, merged abundance tables, and HTML reporting.
+- `--platform nanopore`: Nanopore FASTQ-oriented metagenomics, including read QC, Kraken2 classification, Kraken2-derived abundance tables, optional Bracken abundance estimation, and an HTML report.
+- `--platform illumina`: short-read metagenomics, including read QC, host-removal-ready inputs, Kraken2 taxonomy and abundance outputs, optional Bracken estimation, merged abundance tables, and HTML reporting.
 
 This HOMES workflow keeps the outward-facing output contract aligned across both platforms:
 
@@ -55,20 +55,21 @@ assets/testdata/nanopore/
 
 ## Standard-8 Test Runs
 
-These commands use the bundled test samplesheets and the default `Standard-8` database preset. The first non-stub run downloads the selected Kraken2 database and taxonomy into `--store_dir`; later runs reuse the completed cache.
+These commands use the bundled test samplesheets and the default `Standard-8` database preset. The first non-stub run downloads the selected Kraken2 database and taxonomy into the repository-level `db/` cache by default; later runs reuse the completed cache.
 
-The test profiles set `download_databases = false` to prevent accidental large downloads during lightweight tests, so full Standard-8 runs must explicitly set `--download_databases true`.
+The test profiles set `download_databases = false` and `skip_taxonomy = true` to prevent accidental large downloads during lightweight tests. Full Standard-8 classification runs must explicitly set `--download_databases true --skip_taxonomy false`.
 
 ### Nanopore default dataset
 
 ```bash
-STORE="${HOME}/.homes/metagenomics"
+STORE="${PWD}/db"
 
 nextflow run workflows/HOMES_metagenomics \
   -profile test_nanopore,docker \
   --platform nanopore \
   --database_set Standard-8 \
   --download_databases true \
+  --skip_taxonomy false \
   --store_dir "$STORE" \
   --outdir results/HOMES_metagenomics_nanopore_standard8 \
   -resume
@@ -89,13 +90,14 @@ assets/testdata/nanopore/
 ### Illumina default dataset
 
 ```bash
-STORE="${HOME}/.homes/metagenomics"
+STORE="${PWD}/db"
 
 nextflow run workflows/HOMES_metagenomics \
   -profile test_illumina,docker \
   --platform illumina \
   --database_set Standard-8 \
   --download_databases true \
+  --skip_taxonomy false \
   --store_dir "$STORE" \
   --outdir results/HOMES_metagenomics_illumina_standard8 \
   -resume
@@ -122,6 +124,8 @@ nextflow run workflows/HOMES_metagenomics \
   -resume
 ```
 
+For a non-stub QC/report-only test that reads the bundled FASTQ but skips Kraken2, run the same test profile without `-stub-run`. The test profiles already set `--skip_taxonomy true`.
+
 ```bash
 nextflow run workflows/HOMES_metagenomics \
   -profile test_illumina,docker \
@@ -136,7 +140,7 @@ nextflow run workflows/HOMES_metagenomics \
 Nanopore:
 
 ```bash
-STORE="${HOME}/.homes/metagenomics"
+STORE="${PWD}/db"
 
 nextflow run workflows/HOMES_metagenomics \
   -profile docker \
@@ -144,6 +148,7 @@ nextflow run workflows/HOMES_metagenomics \
   --input /path/to/your_nanopore_samplesheet.csv \
   --database_set Standard-8 \
   --download_databases true \
+  --skip_taxonomy false \
   --store_dir "$STORE" \
   --outdir results/HOMES_metagenomics_nanopore \
   -resume
@@ -152,7 +157,7 @@ nextflow run workflows/HOMES_metagenomics \
 Illumina:
 
 ```bash
-STORE="${HOME}/.homes/metagenomics"
+STORE="${PWD}/db"
 
 nextflow run workflows/HOMES_metagenomics \
   -profile docker \
@@ -160,6 +165,7 @@ nextflow run workflows/HOMES_metagenomics \
   --input /path/to/your_illumina_samplesheet.csv \
   --database_set Standard-8 \
   --download_databases true \
+  --skip_taxonomy false \
   --store_dir "$STORE" \
   --outdir results/HOMES_metagenomics_illumina \
   -resume
@@ -172,9 +178,13 @@ qc/
   <platform>.qc.summary.tsv
 taxonomy/
   <platform>.taxonomy.tsv
+  <sample>.kraken2.report
+  <sample>.kraken2.output
 abundance/
   <platform>.abundance.tsv
   <platform>.relative_abundance.tsv
+  <sample>.bracken.tsv              # only when --bracken true
+  <sample>.bracken.report           # only when --bracken true
 report/
   HOMES_metagenomics.<platform>.report.html
 pipeline_info/
@@ -191,11 +201,11 @@ Use an existing Kraken2/Bracken database:
 nextflow run workflows/HOMES_metagenomics \
   -profile test_nanopore,docker \
   --kraken2_db /path/to/kraken2_db \
-  --bracken_db /path/to/kraken2_db \
+  --skip_taxonomy false \
   --outdir results/HOMES_metagenomics_nanopore
 ```
 
-A Kraken2 database directory should already contain Kraken2-built files such as `hash.k2d`, `opts.k2d`, and `taxo.k2d`. If Bracken abundance estimation is needed, the database should also include the matching Bracken files for the intended read length/kmer setup.
+A Kraken2 database directory should already contain Kraken2-built files such as `hash.k2d`, `opts.k2d`, and `taxo.k2d`. HOMES searches below the provided directory, so archives that unpack into one nested database directory are supported. If Bracken abundance estimation is needed, add `--bracken true --bracken_read_length 150`; the database should also include matching Bracken files for the intended read length/kmer setup.
 
 Or let HOMES download a database archive the first time and reuse it later:
 
@@ -203,10 +213,12 @@ Or let HOMES download a database archive the first time and reuse it later:
 nextflow run workflows/HOMES_metagenomics \
   -profile test_nanopore,docker \
   --database_set Standard-8 \
+  --download_databases true \
+  --skip_taxonomy false \
   --outdir results/HOMES_metagenomics_nanopore
 ```
 
-Available preset names are `Standard-8`, `PlusPF-8`, `PlusPFP-8`, `ncbi_16s_18s`, `ncbi_16s_18s_28s_ITS`, `SILVA_138_1`, and `Greengenes2_plus`. If `--store_dir` is omitted, the default cache root is `~/.homes/metagenomics`.
+Available preset names are `Standard-8`, `PlusPF-8`, `PlusPFP-8`, `ncbi_16s_18s`, `ncbi_16s_18s_28s_ITS`, `SILVA_138_1`, and `Greengenes2_plus`. If `--store_dir` is omitted, the default cache root is the repository-level `db/` directory, for example `/Users/kbian8/Documents/nextflow_work/HOMES/db` in your local checkout. This directory is intentionally ignored by Git.
 
 Each run writes the resolved paths and status:
 
@@ -226,13 +238,12 @@ nextflow run workflows/HOMES_metagenomics \
   --platform nanopore \
   --input /path/to/samplesheet.csv \
   --kraken2_db /path/to/kraken2_db \
-  --bracken_db /path/to/kraken2_db \
   --taxonomy /path/to/taxdump_or_taxonomy_archive \
   --outdir results/HOMES_metagenomics_custom_db \
   -resume
 ```
 
-For a Minimap2/custom FASTA branch, provide:
+For a future Minimap2/custom FASTA branch, provide:
 
 ```bash
 --reference /path/to/reference.fasta
@@ -269,11 +280,11 @@ S1,/path/S1.fastq.gz,,single,/path/host.fa
 The Nanopore implementation should map HOMES parameters to long-read metagenomics concepts:
 
 - `fastq_1` / `--fastq`: Nanopore FASTQ input.
-- `--bam`: optional BAM input.
-- `host_ref` / `--exclude_host`: optional host removal with Minimap2.
-- `--classifier kraken2|minimap2`: taxonomic classification mode.
-- `--database_set`, `--kraken2_db`, `--reference`, `--ref2taxid`: database selection.
+- `host_ref` / `--exclude_host`: reserved for optional host removal.
+- `--classifier kraken2`: current taxonomic classification mode.
+- `--database_set`, `--kraken2_db`: database selection.
 - `--taxonomic_rank`: abundance rank, default species.
+- `--bracken true --bracken_read_length <length>`: optional Bracken abundance estimation when the database supports it.
 - HTML report includes QC, taxonomy composition, abundance, and diversity summary.
 
 ## Illumina module mapping
@@ -283,7 +294,7 @@ The Illumina implementation should map HOMES parameters to short-read metagenomi
 - samplesheet rows become HOMES short-read metagenomics inputs.
 - QC starts with FastQC and preprocessing can use fastp.
 - host filtering can be implemented with Bowtie2/BWA/minimap2-compatible host references.
-- Kraken2 produces taxonomy reports.
-- Bracken estimates rank-level abundance from Kraken2 reports.
+- Kraken2 produces taxonomy reports and default rank-level abundance tables.
+- Bracken can estimate rank-level abundance from Kraken2 reports when `--bracken true`.
 - Taxpasta-compatible tables provide merged count and relative abundance outputs.
 - MultiQC inputs are summarized into the HOMES HTML report.

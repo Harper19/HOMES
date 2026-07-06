@@ -1,16 +1,16 @@
 # HOMES_metagenomics Databases
 
-HOMES_metagenomics supports a persistent database cache for Kraken2/Bracken-style databases.
+HOMES_metagenomics supports a persistent database cache for Kraken2 databases. Bracken can reuse the same database directory when matching Bracken files are present.
 
 ## Use an existing local database
 
-If a Kraken2/Bracken database already exists, pass the directory directly:
+If a Kraken2 database already exists, pass the directory directly:
 
 ```bash
 nextflow run workflows/HOMES_metagenomics \
   -profile test_nanopore,docker \
   --kraken2_db /path/to/kraken2_db \
-  --bracken_db /path/to/kraken2_db \
+  --skip_taxonomy false \
   --outdir results/HOMES_metagenomics_nanopore
 ```
 
@@ -36,15 +36,17 @@ For example:
 nextflow run workflows/HOMES_metagenomics \
   -profile test_nanopore,docker \
   --database_set Standard-8 \
+  --download_databases true \
+  --skip_taxonomy false \
   --outdir results/HOMES_metagenomics_nanopore
 ```
 
 On the first completed run, HOMES downloads the preset Kraken2 database and taxonomy into the persistent cache. Later runs with the same `--database_set` reuse the completed cache.
 
-By default, HOMES uses `~/.homes/metagenomics` as the persistent cache root:
+By default, HOMES uses the repository-level `db/` directory as the persistent cache root:
 
 ```text
-~/.homes/metagenomics/
+db/
   Standard-8/
     kraken2/
       .homes_metagenomics_database.complete
@@ -54,7 +56,7 @@ By default, HOMES uses `~/.homes/metagenomics` as the persistent cache root:
     Standard-8/
 ```
 
-Use `--store_dir` to put the cache on a project disk or shared filesystem.
+Use `--store_dir` to put the cache on another project disk or shared filesystem. Full database caches are ignored by Git and should not be committed.
 
 ## Status values
 
@@ -80,14 +82,13 @@ nextflow run workflows/HOMES_metagenomics \
 
 Use `--download_databases false` to require a completed cache and prevent automatic download.
 
-## Minimap2 reference presets
+## Future custom-reference presets
 
-Targeted presets such as `ncbi_16s_18s`, `SILVA_138_1`, and `Greengenes2_plus` also include `reference` and `ref2taxid` URLs. These are recorded in `database_info.tsv` for Minimap2-compatible branches. You can override them with:
+Targeted presets such as `ncbi_16s_18s`, `SILVA_138_1`, and `Greengenes2_plus` also include `reference` and `ref2taxid` URLs. These are recorded in `database_info.tsv` for future Minimap2-compatible branches. You can already override them for bookkeeping with:
 
 ```bash
 nextflow run workflows/HOMES_metagenomics \
   -profile test_nanopore,docker \
-  --classifier minimap2 \
   --reference /path/to/reference.fasta \
   --ref2taxid /path/to/ref2taxid.tsv
 ```

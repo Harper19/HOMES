@@ -8,6 +8,7 @@
 include { VALIDATE_METAGENOMICS_SAMPLESHEET } from '../modules/local/validate_metagenomics_samplesheet'
 include { PREPARE_METAGENOMICS_DATABASE     } from '../modules/local/prepare_metagenomics_database'
 include { METAGENOMICS_NORMALIZED_TABLES    } from '../modules/local/metagenomics_normalized_tables'
+include { METAGENOMICS_TAXONOMY_ABUNDANCE   } from '../modules/local/metagenomics_taxonomy_abundance'
 include { METAGENOMICS_HTML_REPORT          } from '../modules/local/metagenomics_html_report'
 
 def homesMetagenomicsReadFiles(samplesheet_path) {
@@ -28,9 +29,7 @@ def homesMetagenomicsReadFiles(samplesheet_path) {
                 def value = cols[idx].trim()
                 if (value) {
                     def candidate = value.contains('://') || value.startsWith('/') ? value : "${base}/${value}"
-                    if (value.contains('://')) {
-                        paths << file(candidate)
-                    } else {
+                    if (!value.contains('://')) {
                         paths << file(candidate, checkIfExists: true)
                     }
                 }
@@ -53,7 +52,7 @@ workflow HOMES_METAGENOMICS_ILLUMINA {
 
     main:
     ch_samplesheet = Channel.fromPath(params.input, checkIfExists: true)
-    ch_read_files = Channel.fromList(homesMetagenomicsReadFiles(params.input)).collect()
+    ch_read_files = Channel.value(homesMetagenomicsReadFiles(params.input))
     database_preset = homesMetagenomicsDatabasePreset()
     resolved_database_url = params.database_url ?: (database_preset.database ?: '')
     resolved_taxonomy_url = params.taxonomy_url ?: (database_preset.taxonomy ?: '')
@@ -81,12 +80,25 @@ workflow HOMES_METAGENOMICS_ILLUMINA {
         'illumina',
         ch_read_files
     )
+    METAGENOMICS_TAXONOMY_ABUNDANCE(
+        VALIDATE_METAGENOMICS_SAMPLESHEET.out.samplesheet,
+        'illumina',
+        PREPARE_METAGENOMICS_DATABASE.out.database_info,
+        ch_read_files,
+        params.taxonomic_rank,
+        params.bracken,
+        params.bracken_read_length,
+        params.skip_taxonomy
+    )
     METAGENOMICS_HTML_REPORT(
         'illumina',
         METAGENOMICS_NORMALIZED_TABLES.out.qc,
-        METAGENOMICS_NORMALIZED_TABLES.out.taxonomy,
-        METAGENOMICS_NORMALIZED_TABLES.out.abundance,
-        METAGENOMICS_NORMALIZED_TABLES.out.relative_abundance
+        METAGENOMICS_NORMALIZED_TABLES.out.length_distribution,
+        METAGENOMICS_NORMALIZED_TABLES.out.qvalue_distribution,
+        METAGENOMICS_TAXONOMY_ABUNDANCE.out.taxonomy,
+        METAGENOMICS_TAXONOMY_ABUNDANCE.out.abundance,
+        METAGENOMICS_TAXONOMY_ABUNDANCE.out.relative_abundance,
+        file("${projectDir}/assets/homes_report_logo.svg", checkIfExists: true)
     )
 
     emit:

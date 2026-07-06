@@ -42,8 +42,8 @@
                 "classifier": {
                     "type": "string",
                     "default": "kraken2",
-                    "enum": ["kraken2", "minimap2"],
-                    "description": "Taxonomic classifier. Minimap2 is planned for Nanopore custom references."
+                    "enum": ["kraken2"],
+                    "description": "Taxonomic classifier. Kraken2 is currently implemented."
                 },
                 "taxonomic_rank": {
                     "type": "string",
@@ -95,8 +95,8 @@
                 "store_dir": {
                     "type": "string",
                     "format": "directory-path",
-                    "default": "~/.homes/metagenomics",
-                    "description": "Persistent database cache directory. Override with --store_dir for a shared cache."
+                    "default": "HOMES/db",
+                    "description": "Persistent database cache directory. Defaults to the repository-level db/ directory; override with --store_dir for a shared cache."
                 },
                 "download_databases": {
                     "type": "boolean",
@@ -105,8 +105,23 @@
                 },
                 "bracken": {
                     "type": "boolean",
-                    "default": true,
-                    "description": "Estimate abundance with Bracken after Kraken2."
+                    "default": false,
+                    "description": "Estimate abundance with Bracken after Kraken2 instead of using Kraken2 report fractions."
+                },
+                "bracken_read_length": {
+                    "type": "integer",
+                    "default": 150,
+                    "description": "Read length passed to Bracken when --bracken true."
+                },
+                "metagenomics_taxonomy_container": {
+                    "type": "string",
+                    "default": "staphb/bracken:2.9",
+                    "description": "Container image used for the Kraken2/Bracken taxonomy process."
+                },
+                "skip_taxonomy": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip Kraken2/Bracken classification and write empty taxonomy/abundance tables."
                 }
             }
         },

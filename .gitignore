@@ -21,6 +21,7 @@ logs/
 # Large references and databases
 references/
 databases/
+db/
 *.fa
 *.fasta
 *.fna
@@ -35,6 +36,8 @@ databases/
 !workflows/HOMES_amplicon/assets/testdata/nanopore/reference/16S_PacBio_reference_labeled.fasta
 !workflows/HOMES_metagenomics/assets/testdata/illumina/*.fastq
 !workflows/HOMES_metagenomics/assets/testdata/nanopore/META_NANOPORE_1.fastq
+!workflows/HOMES_metagenomics/assets/testdata/nanopore/test_data_2/
+!workflows/HOMES_metagenomics/assets/testdata/nanopore/test_data_2/*.fastq.gz
 !workflows/HOMES_metagenomics/assets/testdata/refs/
 !workflows/HOMES_metagenomics/assets/testdata/refs/host.fa
 

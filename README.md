@@ -6,11 +6,12 @@ The project focuses on wastewater-industry needs: consistent sample tracking, po
 
 ## Workflows
 
-```text
-workflows/
-  HOMES_amplicon/         # combined amplicon entry point: --platform short or --platform nanopore
-  HOMES_metagenomics/     # combined metagenomic entry point: --platform illumina or --platform nanopore
-```
+| Workflow | README | Platforms | Primary outputs |
+| --- | --- | --- | --- |
+| `HOMES_amplicon` | [workflows/HOMES_amplicon/README.md](workflows/HOMES_amplicon/README.md) | `--platform short`, `--platform nanopore` | QC, taxonomy, abundance, diversity, HTML report |
+| `HOMES_metagenomics` | [workflows/HOMES_metagenomics/README.md](workflows/HOMES_metagenomics/README.md) | `--platform illumina`, `--platform nanopore` | QC, Kraken2 taxonomy, abundance, HTML report |
+
+Workflow-level READMEs include samplesheet formats, test commands, output paths, database notes, and platform-specific options.
 
 ## Amplicon Module
 
@@ -40,13 +41,14 @@ The Nanopore branch is intentionally Nanopore-only. PacBio is not included becau
 `HOMES_metagenomics` is the public entry point for shotgun metagenomic analyses. It provides Illumina and Nanopore branches while keeping HOMES output names stable:
 
 ```bash
-STORE="${HOME}/.homes/metagenomics"
+STORE="${PWD}/db"
 
 nextflow run workflows/HOMES_metagenomics \
   -profile test_illumina,docker \
   --platform illumina \
   --database_set Standard-8 \
   --download_databases true \
+  --skip_taxonomy false \
   --store_dir "$STORE" \
   --outdir results/HOMES_metagenomics_illumina_standard8 \
   -resume
@@ -54,7 +56,7 @@ nextflow run workflows/HOMES_metagenomics \
 
 Use `-profile test_nanopore,docker` with the same `--database_set Standard-8` options for the bundled tiny Nanopore test sample. The first run downloads the selected database into `--store_dir`; later runs reuse it.
 
-## Outputs
+## Shared Outputs
 
 Both modules are organized around a stable HOMES output contract:
 
@@ -73,6 +75,7 @@ Do not commit:
 - `work/`
 - `results/`
 - `.nextflow/`
+- `db/`
 - `.nextflow.log*`
 - large raw sequencing datasets
 - large reference databases
