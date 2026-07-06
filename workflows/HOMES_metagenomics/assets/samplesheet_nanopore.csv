@@ -1,2 +1,7 @@
 sample,fastq_1,fastq_2,read_layout,host_ref
-META_NANOPORE_1,testdata/nanopore/META_NANOPORE_1.fastq,,single,testdata/refs/host.fa
+META_NANOPORE_1,testdata/nanopore/test_data_2/barcode01.fastq.gz,,single,testdata/refs/host.fa
+META_NANOPORE_2,testdata/nanopore/test_data_2/barcode02.fastq.gz,,single,testdata/refs/host.fa
+META_NANOPORE_3,testdata/nanopore/test_data_2/barcode03.fastq.gz,,single,testdata/refs/host.fa
+META_NANOPORE_4,testdata/nanopore/test_data_2/barcode04.fastq.gz,,single,testdata/refs/host.fa
+META_NANOPORE_5,testdata/nanopore/test_data_2/barcode05.fastq.gz,,single,testdata/refs/host.fa
+META_NANOPORE_6,testdata/nanopore/test_data_2/barcode06.fastq.gz,,single,testdata/refs/host.fa
