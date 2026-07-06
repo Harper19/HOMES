@@ -44,15 +44,15 @@ def inline_logo(path):
 
 
 def toc_logo(path):
-    if not path:
-        return ""
-    logo_path = Path(path)
-    if not logo_path.exists():
-        return ""
-    content = logo_path.read_text()
-    if "<svg" in content:
-        return f'<div class="toc-logo">{content}</div>'
-    return ""
+    return """
+<div class="toc-logo">
+  <div class="toc-logo-mark">H</div>
+  <div class="toc-logo-copy">
+    <div class="toc-logo-name">HOMES</div>
+    <div class="toc-logo-tagline">Harmonizing 'Omics for Managing<br>Environmental Systems</div>
+  </div>
+</div>
+"""
 
 
 def toc_html():
@@ -262,7 +262,11 @@ table{border-collapse:collapse;width:100%;margin-top:10px;font-size:14px}th,td{b
 th{background:#f2f4f7}section{margin-bottom:22px}a{color:#24b064;text-decoration:none}
 .main-container{max-width:1160px;margin-left:310px;padding:28px 42px 60px}
 #TOC{position:fixed;left:0;top:0;bottom:0;width:270px;overflow-y:auto;background:#f8f8f8;border-right:1px solid #e2e2e2;padding:18px 18px 28px}
-.toc-logo svg{width:100%;height:auto;display:block;margin-bottom:18px}.title-logo svg{width:100%;max-width:1280px;min-width:760px;height:auto;display:block;margin-bottom:18px}
+.toc-logo{display:flex;align-items:center;gap:10px;margin-bottom:22px;padding:8px 0}
+.toc-logo-mark{flex:0 0 58px;width:58px;height:58px;border-radius:8px;background:#194d44;color:#f7faf8;display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700}
+.toc-logo-copy{min-width:0}.toc-logo-name{font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;letter-spacing:1px;line-height:1;color:#194d44}
+.toc-logo-tagline{font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.18;color:#45635d;margin-top:5px}
+.title-logo{max-width:900px}.title-logo svg{width:100%;max-width:900px;height:auto;display:block;margin-bottom:18px}
 .nav{list-style:none;padding-left:0;margin:0}.nav li a{display:block;padding:8px 10px;border-radius:4px;color:#333}
 .nav li a:hover{background:#e7f5ed;color:#24b064}.nav li:first-child a{background:#24b064;color:#fff}
 .badge{display:inline-block;background:#24b064;color:white;padding:5px 9px;border-radius:4px;font-size:13px;margin-right:6px;margin-bottom:4px}
