@@ -18,7 +18,7 @@
                     "pattern": "^\\S+\\.(tsv|csv|yml|yaml|txt)$",
                     "fa_icon": "fas fa-dna",
                     "description": "Path to tab-separated sample sheet",
-                    "help_text": "Path to sample sheet, either tab-separated (.tsv), comma-separated (.csv), or in YAML format (.yml/.yaml), that points to compressed fastq files.\n\nThe sample sheet must have at least two entries and supports two header layouts:\n- Legacy layout (required): `sampleID`, `forwardReads`; optional: `reverseReads`, `run`, `control`, `quant_reading`\n- Standardized layout (required): `sample`, `fastq_1`; optional: `fastq_2`, `run`, `control`, `quant_reading`\n\nSample IDs must start with a letter and can only contain letters, numbers or underscores.\n\nRelated parameters are:\n- `--pacbio` and `--iontorrent` if the sequencing data is PacBio data or IonTorrent data (default expected: paired-end Illumina data)\n- `--single_end` if the sequencing data is single-ended Illumina data (default expected: paired-end Illumina data)\n- Choose an appropriate reference taxonomy for the type of amplicon (16S/18S/ITS/CO1) (default: DADA2 assignTaxonomy and 16S rRNA sequence database)",
+                    "help_text": "Path to sample sheet, either tab-separated (.tsv), comma-separated (.csv), or in YAML format (.yml/.yaml), that points to compressed fastq files.\n\nThe sample sheet must have at least two entries and supports two header layouts:\n- Legacy layout (required): `sampleID`, `forwardReads`; optional: `reverseReads`, `run`, `control`, `quant_reading`\n- Standardized layout (required): `sample`, `fastq_1`; optional: `fastq_2`, `run`, `control`, `quant_reading`\n\nSample IDs must start with a letter and can only contain letters, numbers or underscores.\n\nRelated parameters are:\n- `--pacbio` and `--iontorrent` if the sequencing data is PacBio data or IonTorrent data (default expected: paired-end Illumina data)\n- `--single_end` if the sequencing data is single-ended Illumina data (default expected: paired-end Illumina data)\n- Choose an appropriate reference taxonomy for the type of amplicon (16S/18S/ITS) (default: DADA2 assignTaxonomy and 16S rRNA sequence database)",
                     "schema": "assets/schema_input.json"
                 },
                 "input_fasta": {
@@ -28,7 +28,7 @@
                     "pattern": "^\\S+\\.(fasta|fas|fna|fa|ffn)$",
                     "fa_icon": "fas fa-dna",
                     "description": "Path to ASV/OTU fasta file",
-                    "help_text": "Path to fasta format file with sequences that will be taxonomically classified. The fasta file input option can be used to taxonomically classify previously produced ASV/OTU sequences.\n\nThe fasta sequence header line may contain a description, that will be kept as part of the sequence name. However, tabs will be changed into spaces.\n\nRelated parameters are:\n- Choose an appropriate reference taxonomy for the type of amplicon (16S/18S/ITS/CO1) (default: DADA2 assignTaxonomy and 16S rRNA sequence database)"
+                    "help_text": "Path to fasta format file with sequences that will be taxonomically classified. The fasta file input option can be used to taxonomically classify previously produced ASV/OTU sequences.\n\nThe fasta sequence header line may contain a description, that will be kept as part of the sequence name. However, tabs will be changed into spaces.\n\nRelated parameters are:\n- Choose an appropriate reference taxonomy for the type of amplicon (16S/18S/ITS) (default: DADA2 assignTaxonomy and 16S rRNA sequence database)"
                 },
                 "input_folder": {
                     "type": "string",
@@ -455,12 +455,10 @@
             "properties": {
                 "dada_ref_taxonomy": {
                     "type": "string",
-                    "help_text": "Choose any of the supported databases, and optionally also specify the version. Database and version are separated by an equal sign (`=`, e.g. `silva=138`) . This will download the desired database, format it to produce a file that is compatible with DADA2's assignTaxonomy and another file that is compatible with DADA2's addSpecies.\n\nThe following databases are supported:\n- GTDB - Genome Taxonomy Database - 16S rRNA\n- SBDI-GTDB, a Sativa-vetted version of the GTDB 16S rRNA\n- PR2 - Protist Reference Ribosomal Database - 18S rRNA\n- RDP - Ribosomal Database Project - 16S rRNA\n- SILVA ribosomal RNA gene database project - 16S rRNA\n- UNITE - eukaryotic nuclear ribosomal ITS region - ITS\n- COIDB - eukaryotic Cytochrome Oxidase I (COI) from The Barcode of Life Data System (BOLD) - COI\n\nGenerally, using `gtdb`, `pr2`, `rdp`, `sbdi-gtdb`, `silva`, `coidb`, `unite-fungi`, or `unite-alleuk` will select the most recent supported version.\n\nPlease note that commercial/non-academic entities [require licensing](https://www.arb-silva.de/silva-license-information) for SILVA v132 database (non-default) but not from v138 on (default).",
+                    "help_text": "Choose any of the supported databases, and optionally also specify the version. Database and version are separated by an equal sign (`=`, e.g. `silva=138`) . This will download the desired database, format it to produce a file that is compatible with DADA2's assignTaxonomy and another file that is compatible with DADA2's addSpecies.\n\nThe following databases are supported:\n- GTDB - Genome Taxonomy Database - 16S rRNA\n- SBDI-GTDB, a Sativa-vetted version of the GTDB 16S rRNA\n- PR2 - Protist Reference Ribosomal Database - 18S rRNA\n- RDP - Ribosomal Database Project - 16S rRNA\n- SILVA ribosomal RNA gene database project - 16S rRNA\n- UNITE - eukaryotic nuclear ribosomal ITS region - ITS\n\nGenerally, using `gtdb`, `pr2`, `rdp`, `sbdi-gtdb`, `silva`, `unite-fungi`, or `unite-alleuk` will select the most recent supported version.\n\nPlease note that commercial/non-academic entities [require licensing](https://www.arb-silva.de/silva-license-information) for SILVA v132 database (non-default) but not from v138 on (default).",
                     "description": "Name of supported database, and optionally also version number",
                     "default": "sbdi-gtdb=R11-RS232-1",
                     "enum": [
-                        "coidb",
-                        "coidb=221216",
                         "greengenes2",
                         "greengenes2=2024.09",
                         "gtdb",
@@ -471,8 +469,6 @@
                         "gtdb=R09-RS220",
                         "gtdb=R10-RS226",
                         "gtdb=R11-RS232",
-                        "midori2-co1",
-                        "midori2-co1=gb250",
                         "pr2",
                         "pr2=4.13.0",
                         "pr2=4.14.0",
@@ -649,11 +645,9 @@
                 },
                 "sintax_ref_taxonomy": {
                     "type": "string",
-                    "help_text": "Choose any of the supported databases, and optionally also specify the version. Database and version are separated by an equal sign (`=`, e.g. `coidb=221216`) . This will download the desired database and initiate taxonomic classification with VSEARCH sintax and the chosen database, which if needed is formatted to produce a file that is compatible with VSEARCH sintax.\n\nThe following databases are supported:\n- COIDB - eukaryotic Cytochrome Oxidase I (COI) from The Barcode of Life Data System (BOLD) - COI\n- UNITE - eukaryotic nuclear ribosomal ITS region - ITS\n\nGenerally, using `coidb`, `unite-fungi`, or `unite-alleuk` will select the most recent supported version.\n\nCannot be used together with `--sintax_ref_tax_custom`.",
+                    "help_text": "Choose any of the supported databases, and optionally also specify the version. Database and version are separated by an equal sign (`=`, e.g. `unite-fungi=10.0`) . This will download the desired database and initiate taxonomic classification with VSEARCH sintax and the chosen database, which if needed is formatted to produce a file that is compatible with VSEARCH sintax.\n\nThe following databases are supported:\n- UNITE - eukaryotic nuclear ribosomal ITS region - ITS\n\nGenerally, using `unite-fungi` or `unite-alleuk` will select the most recent supported version.\n\nCannot be used together with `--sintax_ref_tax_custom`.",
                     "description": "Name of supported database, and optionally also version number",
                     "enum": [
-                        "coidb",
-                        "coidb=221216",
                         "unite-fungi",
                         "unite-fungi=10.0",
                         "unite-fungi=9.0",
@@ -683,13 +677,9 @@
                 },
                 "vsearch_lca_ref_taxonomy": {
                     "type": "string",
-                    "help_text": "Choose one of the supported built-in databases for VSEARCH LCA. Database and version are separated by an equal sign (`=`, e.g. `midori2-co1=gb270`). This downloads the selected reference and runs VSEARCH usearch_global with `--lcaout`.\n\nThe following built-in databases are currently supported:\n- COIDB - eukaryotic Cytochrome Oxidase I (COI) from BOLD\n- MIDORI2-CO1 - metazoan COI reference sequences in SINTAX format (default: GenBank270 release on reference-midori.info)\n- UNITE (`unite-fungi`, `unite-alleuk`, and pinned versions) - eukaryotic nuclear ribosomal ITS in USEARCH/UTAX (SINTAX-compatible) format\n\nUsing `unite-fungi` or `unite-alleuk` selects the most recent supported release. Cannot be used together with `--vsearch_lca_ref_tax_custom`.",
+                    "help_text": "Choose one of the supported built-in databases for VSEARCH LCA. Database and version are separated by an equal sign (`=`, e.g. `unite-fungi=10.0`). This downloads the selected reference and runs VSEARCH usearch_global with `--lcaout`.\n\nThe following built-in databases are currently supported:\n- UNITE (`unite-fungi`, `unite-alleuk`, and pinned versions) - eukaryotic nuclear ribosomal ITS in USEARCH/UTAX (SINTAX-compatible) format\n\nUsing `unite-fungi` or `unite-alleuk` selects the most recent supported release. Cannot be used together with `--vsearch_lca_ref_tax_custom`.",
                     "description": "Name of built-in VSEARCH LCA reference database, and optionally also version number",
                     "enum": [
-                        "coidb",
-                        "coidb=221216",
-                        "midori2-co1",
-                        "midori2-co1=gb270",
                         "unite-fungi",
                         "unite-fungi=10.0",
                         "unite-fungi=9.0",

@@ -191,7 +191,7 @@ if ( !isFALSE(params$report_abstract) ) {
 # Abstract
 
 The bioinformatics analysis pipeline [HOMES_amplicon](https://github.com/Harper19/HOMES/tree/main/workflows/HOMES_amplicon) is used for amplicon sequencing,
-supporting denoising of any amplicon and supports a variety of taxonomic databases for taxonomic assignment including 16S, ITS, CO1 and 18S.
+supporting denoising of common marker-gene amplicons and a variety of taxonomic databases for taxonomic assignment including 16S, 18S and ITS.
     "))
 }
 ```
@@ -761,7 +761,7 @@ if (length(classified_ranks) > 0) {
 
         svg_file <- paste0("dada2_relative_abundance_top_taxa_", tolower(abundance_rank), ".svg")
         svg(svg_file)
-        plot_tax_abund
+        print(plot_tax_abund)
         invisible(dev.off())
         cat('<p><img src="', svg_file, '" width="100%" style="float: none;"/></p>\n', sep = "")
         cat("</div>\n")

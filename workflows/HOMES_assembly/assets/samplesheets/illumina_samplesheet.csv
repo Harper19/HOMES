@@ -1,0 +1,2 @@
+sample,fastq_1,fastq_2,read_layout,assembly_group
+ASM_ILLUMINA_1,../testdata/illumina/ASM_ILLUMINA_1_R1.fastq,../testdata/illumina/ASM_ILLUMINA_1_R2.fastq,paired,default

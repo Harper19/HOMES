@@ -1,0 +1,18 @@
+flowchart TD
+    A["Samplesheet and reads"] --> B["Validate samplesheet"]
+    B --> T["Trim/filter reads"]
+    T --> C["Read QC"]
+    T --> D{"Platform"}
+    D -->|Illumina| E["MEGAHIT assembly"]
+    D -->|Nanopore| F["Flye meta assembly"]
+    E --> G["Contigs FASTA"]
+    F --> G
+    G --> H["Assembly statistics"]
+    G --> J["Binning"]
+    J --> K["Genome annotation"]
+    K --> L["Functional gene annotation"]
+    C --> I["HTML report"]
+    H --> I
+    J --> I
+    K --> I
+    L --> I

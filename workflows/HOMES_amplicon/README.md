@@ -9,6 +9,16 @@ It provides one public entry point with two platform modes:
 
 PacBio is intentionally not included in the long-read branch because PacBio and Nanopore have different error models and should not silently share the same assumptions.
 
+## Workflow Figures
+
+### Illumina
+
+![HOMES_amplicon Illumina workflow](docs/images/HOMES_amplicon_Illumina.png)
+
+### Nanopore
+
+![HOMES_amplicon Nanopore workflow](docs/images/HOMES_amplicon_Nanopore.png)
+
 ## Quick Start
 
 Run the Illumina short-read test:
@@ -144,7 +154,7 @@ Custom minimap2 reference FASTA:
 - Optional `taxid=12345`, `taxid:12345`, `|taxid|12345`, or `kraken:taxid|12345` text in the header can be used with `--minimap2_filter_taxids` and `--minimap2_exclude_taxids`.
 - No separate taxonomy TSV is currently required for minimap2 mode.
 
-Kraken2 taxonomy:
+Kraken2 taxonomy with an automatically downloaded SILVA preset:
 
 ```bash
 nextflow run workflows/HOMES_amplicon \
@@ -153,11 +163,14 @@ nextflow run workflows/HOMES_amplicon \
   --target_marker 16S \
   --fastq "data/nanopore_fastq/*.fastq.gz" \
   --classifier kraken2 \
-  --kraken2_db refs/kraken2_db \
+  --kraken2_ref_taxonomy silva \
+  --ref_taxonomy_storage db/HOMES_amplicon/ref_taxonomy \
   --tax_level all \
-  --outdir results/HOMES_amplicon_nanopore_kraken2 \
+  --outdir results/HOMES_amplicon_nanopore_silva \
   -resume
 ```
+
+`--kraken2_ref_taxonomy silva` downloads the configured pre-formatted SILVA Kraken2 database the first time it is used. `--ref_taxonomy_storage` keeps the downloaded archive in a reusable local cache so later runs do not download it again.
 
 Custom Kraken2 reference database:
 
@@ -241,7 +254,7 @@ The abundance folder contains:
 
 The HTML reports show abundance as a separate section. Relative abundance tables are displayed as matrices with taxa as rows and sample IDs as columns. A taxonomy-level dropdown is shown when more than one level is available.
 
-Nanopore mode is designed with reference to EPI2ME Labs `wf-16s` concepts while remaining a HOMES workflow. It supports Nanopore amplicon analysis for `16S`, `18S`, or `ITS` marker labels via `--target_marker`; minimap2 alignment-based classification; kraken2 k-mer classification; optional Bracken abundance estimation; taxonomic profile tables; top-taxa bar plots; and lineage exploration in the HTML report using sankey and sunburst views.
+Nanopore mode supports Nanopore amplicon analysis for `16S`, `18S`, or `ITS` marker labels via `--target_marker`; minimap2 alignment-based classification; kraken2 k-mer classification; optional Bracken abundance estimation; taxonomic profile tables; top-taxa bar plots; and lineage exploration in the HTML report using sankey and sunburst views.
 
 ## HTML Reports
 
@@ -263,4 +276,4 @@ Nanopore mode writes:
 
 ## Ethics And Provenance
 
-HOMES_amplicon is an independent workflow. Its short-read branch was built by adapting ideas and workflow structure from nf-core/ampliseq, and its Nanopore branch was designed with reference to EPI2ME Labs wf-16s concepts. See `ACKNOWLEDGEMENTS.md` and `CITATIONS.md` for attribution.
+HOMES_amplicon is an independent workflow. Its short-read branch was built by adapting ideas and workflow structure from nf-core/ampliseq. See `ACKNOWLEDGEMENTS.md` and `CITATIONS.md` for attribution.

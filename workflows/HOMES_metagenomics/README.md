@@ -24,6 +24,8 @@ The workflow validates input, writes HOMES-normalized QC/taxonomy/abundance outp
 
 ![HOMES_metagenomics workflow](figure/HOMES_metagenomics_workflow.png)
 
+The Mermaid source is stored in [`figure/homes_metagenomics_workflow.mmd`](figure/homes_metagenomics_workflow.mmd).
+
 ## Samplesheet
 
 Required columns:

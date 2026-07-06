@@ -4,9 +4,23 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+include { DOWNLOAD_REFERENCE } from '../modules/local/download_reference'
+
 workflow NANOPORE_AMPLICON {
 
     main:
+    banner = """
+-\033[2m----------------------------------------------------\033[0m-
+\033[0;36m   _   _  ___  __  __ _____ ____  \033[0m
+\033[0;36m  | | | |/ _ \\|  \\/  | ____/ ___| \033[0m
+\033[0;36m  | |_| | | | | |\\/| |  _| \\___ \\ \033[0m
+\033[0;36m  |  _  | |_| | |  | | |___ ___) |\033[0m
+\033[0;36m  |_| |_|\\___/|_|  |_|_____|____/ \033[0m
+\033[0;35m  HOMES_amplicon ${workflow.manifest.version}\033[0m
+-\033[2m----------------------------------------------------\033[0m-
+"""
+    log.info(params.monochrome_logs ? banner.replaceAll(/\033\[[0-9;]*m/, '') : banner)
+
     if ((params.platform ?: '').toString().toLowerCase() != 'nanopore') {
         error "NANOPORE_AMPLICON was called with --platform '${params.platform}'. Use --platform nanopore."
     }
@@ -77,14 +91,28 @@ workflow NANOPORE_AMPLICON {
         ch_relative_abundance = MINIMAP2_ABUNDANCE.out.relative_abundance
         ch_diversity = MINIMAP2_ABUNDANCE.out.diversity
     } else if (classifier == 'kraken2') {
-        if (!params.kraken2_db) {
-            error "--classifier kraken2 requires --kraken2_db."
+        if (params.kraken2_db && params.kraken2_ref_taxonomy) {
+            error "Use only one Nanopore Kraken2 database mode: --kraken2_db or --kraken2_ref_taxonomy."
         }
-        ch_kraken2_db = Channel.value(file(params.kraken2_db, checkIfExists: true))
+
+        selected_kraken2_ref_taxonomy = params.kraken2_ref_taxonomy ?: (!params.kraken2_db ? 'silva' : null)
+        if (params.kraken2_db) {
+            ch_kraken2_db = Channel.value(file(params.kraken2_db, checkIfExists: true))
+        } else {
+            if (!params.kraken2_ref_databases || !params.kraken2_ref_databases.containsKey(selected_kraken2_ref_taxonomy)) {
+                error "Kraken2 reference database '${selected_kraken2_ref_taxonomy}' not found. Available keys: ${params.kraken2_ref_databases ? params.kraken2_ref_databases.keySet().join(', ') : 'none'}"
+            }
+            ch_kraken2_ref_taxonomy_url = Channel.fromList(params.kraken2_ref_databases[selected_kraken2_ref_taxonomy]['file'])
+            DOWNLOAD_REFERENCE(ch_kraken2_ref_taxonomy_url)
+            PREPARE_NANOPORE_KRAKEN2_DB(
+                selected_kraken2_ref_taxonomy.replace('=','_').replace('.','_'),
+                DOWNLOAD_REFERENCE.out.db.collect()
+            )
+            ch_kraken2_db = PREPARE_NANOPORE_KRAKEN2_DB.out.db
+        }
         KRAKEN2_CLASSIFY(NANOPORE_QC.out.filtered_fastq, ch_kraken2_db)
         if (params.bracken) {
-            bracken_db_path = params.bracken_db ?: params.kraken2_db
-            ch_bracken_db = Channel.value(file(bracken_db_path, checkIfExists: true))
+            ch_bracken_db = params.bracken_db ? Channel.value(file(params.bracken_db, checkIfExists: true)) : ch_kraken2_db
             BRACKEN_ABUNDANCE(KRAKEN2_CLASSIFY.out.report, ch_bracken_db)
             BRACKEN_ABUNDANCE_SUMMARY(BRACKEN_ABUNDANCE.out.bracken)
             ch_relative_abundance = BRACKEN_ABUNDANCE_SUMMARY.out.relative_abundance
@@ -185,6 +213,44 @@ process NANOPORE_QC {
         --max_len ${params.nanopore_max_len ?: 0} \\
         --min_read_qual ${params.min_read_qual} \\
         --out_prefix "$reads.simpleName"
+    """
+}
+
+process PREPARE_NANOPORE_KRAKEN2_DB {
+    tag "$ref_name"
+    label 'process_single'
+
+    container 'docker.io/library/python:3.11'
+
+    publishDir "${params.outdir}/nanopore/reference", mode: params.publish_dir_mode
+
+    input:
+    val ref_name
+    path archives
+
+    output:
+    path "${db_dir}", emit: db
+
+    script:
+    db_dir = "kraken2_${ref_name}".replaceAll(/[^A-Za-z0-9_.-]/, '_')
+    archive_paths = archives instanceof List ? archives : [archives]
+    archive_args = archive_paths.collect { "\"${it}\"" }.join(' ')
+    """
+    mkdir -p unpack "${db_dir}"
+
+    for archive in ${archive_args}; do
+        tar -xzf "\$archive" -C unpack
+    done
+
+    db_hash_path=\$(find unpack -type f -name hash.k2d -print -quit)
+    if [ -z "\$db_hash_path" ]; then
+        echo "Could not find hash.k2d in downloaded Kraken2 archive(s)." >&2
+        exit 1
+    fi
+
+    db_path=\$(dirname "\$db_hash_path")
+    cp -R "\$db_path"/. "${db_dir}/"
+    test -f "${db_dir}/hash.k2d"
     """
 }
 

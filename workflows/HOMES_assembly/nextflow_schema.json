@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "title": "HOMES_assembly parameters",
+  "type": "object",
+  "properties": {
+    "platform": {
+      "type": "string",
+      "enum": ["illumina", "nanopore"],
+      "default": "illumina",
+      "description": "Sequencing platform."
+    },
+    "input": {
+      "type": "string",
+      "description": "CSV samplesheet with sample, fastq_1, fastq_2, read_layout, and optional assembly_group columns."
+    },
+    "assembler": {
+      "type": "string",
+      "enum": ["megahit", "flye"],
+      "description": "Assembler. Use megahit for Illumina and flye for Nanopore."
+    },
+    "outdir": {
+      "type": "string",
+      "default": "results/HOMES_assembly",
+      "description": "Output directory."
+    },
+    "min_contig_len": {
+      "type": "integer",
+      "default": 1000,
+      "description": "Minimum contig length for assembly output."
+    },
+    "genome_size": {
+      "type": "string",
+      "default": "100m",
+      "description": "Estimated genome/metagenome size passed to Flye for Nanopore assembly."
+    },
+    "flye_mode": {
+      "type": "string",
+      "enum": ["meta", "isolate"],
+      "default": "meta",
+      "description": "Flye mode for Nanopore reads."
+    },
+    "trim_reads": {
+      "type": "boolean",
+      "default": true,
+      "description": "Run HOMES native adapter and quality trimming before assembly."
+    },
+    "min_read_quality": {
+      "type": "integer",
+      "default": 10,
+      "description": "Minimum quality threshold for end trimming."
+    },
+    "min_read_length": {
+      "type": "integer",
+      "default": 50,
+      "description": "Minimum read length retained after trimming."
+    },
+    "adapter_1": {
+      "type": "string",
+      "description": "Optional adapter sequence to clip from fastq_1 reads."
+    },
+    "adapter_2": {
+      "type": "string",
+      "description": "Optional adapter sequence to clip from fastq_2 reads."
+    },
+    "binner": {
+      "type": "string",
+      "enum": ["metabat2", "native"],
+      "default": "metabat2",
+      "description": "Binning method. Use metabat2 for real runs or native for lightweight validation."
+    },
+    "binning_min_contig_len": {
+      "type": "integer",
+      "default": 1500,
+      "description": "Minimum contig length used for binning."
+    },
+    "skip_binning": {
+      "type": "boolean",
+      "default": false,
+      "description": "Skip external binning and pass contigs forward as a pseudo-bin."
+    },
+    "annotation_tool": {
+      "type": "string",
+      "enum": ["prokka", "native"],
+      "default": "prokka",
+      "description": "Genome and functional annotation method."
+    },
+    "skip_annotation": {
+      "type": "boolean",
+      "default": false,
+      "description": "Skip genome annotation."
+    },
+    "skip_functional_annotation": {
+      "type": "boolean",
+      "default": false,
+      "description": "Skip functional gene annotation table generation."
+    },
+    "server_queue": {
+      "type": "string",
+      "description": "Optional server queue name used by server_slurm or server_pbs profiles."
+    },
+    "server_cluster_options": {
+      "type": "string",
+      "description": "Optional raw scheduler options passed through Nextflow."
+    }
+  }
+}

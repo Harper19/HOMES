@@ -34,27 +34,28 @@ def table_html(title, rows, section_id=None):
 
 
 def inline_logo(path):
-    if not path:
-        return ""
-    logo_path = Path(path)
-    if not logo_path.exists():
-        return ""
-    content = logo_path.read_text()
-    if "<svg" in content:
-        return f'<div class="logo">{content}</div>'
-    return ""
+    return """
+<div class="title-logo-brand">
+  <div class="title-logo-mark">H</div>
+  <div class="title-logo-copy">
+    <div class="title-logo-name">HOMES</div>
+    <div class="title-logo-tagline">Harmonizing 'Omics for Managing</div>
+    <div class="title-logo-tagline">Environmental Systems</div>
+  </div>
+</div>
+"""
 
 
 def toc_logo(path):
-    if not path:
-        return ""
-    logo_path = Path(path)
-    if not logo_path.exists():
-        return ""
-    content = logo_path.read_text()
-    if "<svg" in content:
-        return f'<div class="toc-logo">{content}</div>'
-    return ""
+    return """
+<div class="toc-logo">
+  <div class="toc-logo-mark">H</div>
+  <div class="toc-logo-copy">
+    <div class="toc-logo-name">HOMES</div>
+    <div class="toc-logo-tagline">Harmonizing 'Omics for Managing<br>Environmental Systems</div>
+  </div>
+</div>
+"""
 
 
 def toc_html():
@@ -79,6 +80,48 @@ def rows_by_sample(rows):
     return grouped
 
 
+def abundance_level_barplot_svg(rows, top_taxa):
+    grouped_rows = {}
+    for sample, sample_rows in rows_by_sample(rows).items():
+        abundance_rows = []
+        for row in sample_rows:
+            try:
+                abundance_rows.append((
+                    row.get("taxon", "Unknown"),
+                    float(row.get("relative_abundance", 0)),
+                    int(float(row.get("reads", 0))),
+                ))
+            except ValueError:
+                continue
+        abundance_rows = sorted(abundance_rows, key=lambda item: item[1], reverse=True)[:top_taxa]
+        if abundance_rows:
+            grouped_rows[sample] = abundance_rows
+
+    if not grouped_rows:
+        return "<p>No abundance values were available for plotting at this taxonomy level.</p>"
+
+    width = 900
+    row_height = 26
+    sample_header_height = 28
+    label_width = 260
+    plot_width = width - label_width - 40
+    height = 42 + sum(sample_header_height + row_height * len(sample_rows) for sample_rows in grouped_rows.values())
+    parts = [f'<svg class="abundance-level-barplot" viewBox="0 0 {width} {height}" role="img">']
+    parts.append('<style>text{font-family:Arial,sans-serif;font-size:13px}.sample{font-weight:bold;font-size:14px}.bar{fill:#1f9e89}</style>')
+    y = 28
+    for sample, abundance_rows in grouped_rows.items():
+        parts.append(f'<text class="sample" x="0" y="{y}">{html.escape(sample)}</text>')
+        y += sample_header_height
+        for taxon, rel, reads in abundance_rows:
+            bar_width = max(1, rel * plot_width)
+            parts.append(f'<text x="0" y="{y + 14}">{html.escape(taxon[:42])}</text>')
+            parts.append(f'<rect class="bar" x="{label_width}" y="{y}" width="{bar_width:.2f}" height="18"></rect>')
+            parts.append(f'<text x="{label_width + bar_width + 8:.2f}" y="{y + 14}">{rel * 100:.2f}% ({reads})</text>')
+            y += row_height
+    parts.append("</svg>")
+    return "\n".join(parts)
+
+
 def preferred_visual_rows(rows):
     if not rows:
         return rows
@@ -93,7 +136,7 @@ def preferred_visual_rows(rows):
     return rows
 
 
-def abundance_matrix_html(rows):
+def abundance_matrix_html(rows, top_taxa):
     if not rows:
         return '<section id="abundance"><h2>Abundance</h2><p>No relative abundance table was generated.</p></section>'
 
@@ -132,6 +175,8 @@ def abundance_matrix_html(rows):
         style = "" if idx == 0 else ' style="display:none"'
         parts.append(f'<div class="abundance-level" id="abundance-level-{html.escape(level)}"{style}>')
         parts.append(f'<h3>{html.escape(level.title())}</h3>')
+        parts.append("<h4>Top taxa barplot</h4>")
+        parts.append(abundance_level_barplot_svg(level_rows, top_taxa))
         parts.append('<table class="abundance-table"><thead><tr><th>Taxa</th>')
         parts.extend(f'<th>{html.escape(sample)}</th>' for sample in samples)
         parts.append('</tr></thead><tbody>')
@@ -350,13 +395,21 @@ table{border-collapse:collapse;width:100%;margin-top:10px;font-size:14px}th,td{b
 th{background:#f2f4f7}section{margin-bottom:22px}input,select{padding:8px;border:1px solid #b8bdc7;max-width:100%}
 a{color:#24b064;text-decoration:none}.main-container{max-width:980px;margin-left:310px;padding:28px 42px 60px}
 #TOC{position:fixed;left:0;top:0;bottom:0;width:270px;overflow-y:auto;background:#f8f8f8;border-right:1px solid #e2e2e2;padding:18px 18px 28px}
-.toc-logo svg{width:100%;height:auto;display:block;margin-bottom:18px}.title-logo svg{width:100%;max-width:900px;height:auto;display:block;margin-bottom:16px}
+.toc-logo{display:flex;align-items:center;gap:10px;margin-bottom:22px;padding:8px 0}
+.toc-logo-mark{flex:0 0 58px;width:58px;height:58px;border-radius:8px;background:#194d44;color:#f7faf8;display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700}
+.toc-logo-copy{min-width:0}.toc-logo-name{font-family:Arial,Helvetica,sans-serif;font-size:30px;font-weight:700;letter-spacing:1px;line-height:1;color:#194d44}
+.toc-logo-tagline{font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.18;color:#45635d;margin-top:5px}
+.title-logo{max-width:900px;margin-bottom:18px}.title-logo-brand{display:flex;align-items:center;gap:28px;padding:16px 0 8px}
+.title-logo-mark{flex:0 0 124px;width:124px;height:124px;border-radius:16px;background:#194d44;color:#f7faf8;display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;font-size:56px;font-weight:700}
+.title-logo-copy{min-width:0}.title-logo-name{font-family:Arial,Helvetica,sans-serif;font-size:64px;font-weight:700;letter-spacing:2px;line-height:1;color:#194d44}
+.title-logo-tagline{font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:1.18;color:#45635d}
 .nav{list-style:none;padding-left:0;margin:0}.nav li a{display:block;padding:8px 10px;border-radius:4px;color:#333}
 .nav li a:hover{background:#e7f5ed;color:#24b064}.nav li:first-child a{background:#24b064;color:#fff}
 .badge{display:inline-block;background:#24b064;color:white;padding:5px 9px;border-radius:4px;font-size:13px;margin-right:6px;margin-bottom:4px}
 .subtle{color:#45635d}.platform-line{margin:10px 0 16px}
 .abundance-table th:first-child{min-width:220px}.abundance-table td{text-align:right}
 svg{max-width:100%;height:auto}@media(max-width:900px){#TOC{position:static;width:auto;border-right:0}.main-container{margin-left:0;padding:22px}}
+@media(max-width:620px){.title-logo-brand{gap:14px}.title-logo-mark{flex-basis:76px;width:76px;height:76px;border-radius:10px;font-size:36px}.title-logo-name{font-size:40px}.title-logo-tagline{font-size:15px}}
 """
     doc = f"""<!doctype html>
 <html lang="en">
@@ -376,10 +429,10 @@ svg{max-width:100%;height:auto}@media(max-width:900px){#TOC{position:static;widt
 <h3 class="subtitle">HOMES_amplicon Nanopore workflow</h3>
 <p><strong>HOMES</strong>: Harmonizing 'Omics for Managing Environmental Systems</p>
 <p class="platform-line"><span class="badge">Platform: Nanopore</span><span class="badge">Marker: {html.escape(args.target_marker)}</span><span class="badge">Classifier: {html.escape(args.classifier)}</span><span class="badge">Tax level: {html.escape(args.tax_level)}</span></p>
-<p class="subtle">Nanopore-only amplicon QC, taxonomy, abundance, and diversity summary. The Nanopore branch follows the wf-16s-style concepts of minimap2 or kraken2 classification, taxonomic profiles, abundance tables, lineage exploration, and top-taxa comparison.</p>
+<p class="subtle">Nanopore-only amplicon QC, taxonomy, abundance, and diversity summary with minimap2 or kraken2 classification, taxonomic profiles, abundance tables, lineage exploration, and top-taxa comparison.</p>
 {table_html("Read QC Summary", qc_rows, "read-qc-summary")}
 {barplot_svg(abundance_rows, args.top_taxa)}
-{abundance_matrix_html(abundance_rows)}
+{abundance_matrix_html(abundance_rows, args.top_taxa)}
 {sankey_svg(abundance_rows, args.top_taxa)}
 {sunburst_svg(abundance_rows, args.top_taxa)}
 {taxonomy_tree_html(abundance_rows)}
