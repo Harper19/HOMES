@@ -268,12 +268,3 @@ Nanopore mode writes:
 
 - `nanopore/report/homes_nanopore_report.html`: read QC, taxonomy-derived top taxa, relative abundance and diversity.
 - The Nanopore report carries HOMES branding, a visible Nanopore platform label, marker label, classifier, taxonomic level, top-taxa bar plot, lineage sankey, and lineage sunburst.
-
-## Workflow Diagrams
-
-- `docs/images/homes_amplicon_shortread_overview.svg`
-- `docs/images/homes_amplicon_nanopore_overview.svg`
-
-## Ethics And Provenance
-
-HOMES_amplicon is an independent workflow. Its short-read branch was built by adapting ideas and workflow structure from nf-core/ampliseq. See `ACKNOWLEDGEMENTS.md` and `CITATIONS.md` for attribution.
