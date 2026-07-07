@@ -134,16 +134,3 @@ nextflow run workflows/HOMES_assembly \
   --outdir /path/to/results/HOMES_assembly_nanopore \
   -resume
 ```
-
-## Shared Outputs
-
-Both modules are organized around a stable HOMES output contract:
-
-- `qc/` for read-quality and preprocessing summaries.
-- `taxonomy/` for classifier outputs and per-sample taxonomy tables.
-- `abundance/` for count and relative-abundance matrices.
-- `assembly/` for contigs and assembly statistics where applicable.
-- `binning/` and `annotation/` for MAG-style genome recovery and functional gene annotation where applicable.
-- `report/` for shareable HTML summaries.
-- `pipeline_info/` for validated inputs, versions, and run metadata.
-
