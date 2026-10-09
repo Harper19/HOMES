@@ -68,6 +68,12 @@ nextflow info
 
 Add `export PATH="$PATH:$HOME/.local/bin"` to `~/.zshrc` or `~/.bashrc` if `nextflow` is not found in a new terminal.
 
+## Download the workflow
+```bash
+git clone https://github.com/Harper19/HOMES.git
+cd HOMES
+```
+
 ## Amplicon Module
 
 `HOMES_amplicon` is the public entry point for marker-gene microbiome analyses. It supports short-read amplicon workflows for 16S/18S/ITS-style datasets and a Nanopore-only long-read amplicon branch with QC, optional host removal, taxonomy classification, abundance tables, diversity summaries, and an HTML report.
