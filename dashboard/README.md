@@ -7,6 +7,44 @@ HTML report.
 It needs only Python 3.8+ (standard library, nothing to `pip install`) plus the usual HOMES requirements
 (Java 17+, Nextflow, Docker or Singularity).
 
+## Before you start
+
+Install these once, in this order:
+
+| # | What | Why | How (macOS) |
+| --- | --- | --- | --- |
+| 1 | **Docker Desktop** | Provides all bioinformatics tools (fastp, Kraken2, DADA2, …) automatically | [Download](https://docs.docker.com/get-started/get-docker/), install, open it once and wait until it says *running* |
+| 2 | **Java 17 or newer** | Nextflow runs on Java | Install [Temurin 17](https://adoptium.net/temurin/releases/?version=17) |
+| 3 | **Nextflow** | Runs the HOMES workflows | See [Installation](../README.md#nextflow) in the main README |
+| 4 | **HOMES** | The workflows and this dashboard | `git clone https://github.com/Harper19/HOMES.git` or *Code → Download ZIP* on GitHub |
+| 5 | Python 3 | Runs the dashboard | Usually already there. If not, typing `python3` in Terminal offers to install it |
+| – | Chrome or Edge (optional) | Opens the dashboard as its own app window | Without it, the dashboard opens in Safari / your default browser |
+
+Then check everything in one go from the HOMES folder:
+
+```bash
+python3 dashboard/homes_dashboard.py --check
+```
+
+It lists what is ready (✓), what needs attention (!) and what is missing (✗), with download links.
+The same checks are on the dashboard's **Setup** tab.
+
+Good to know:
+
+- **Open Docker Desktop before every analysis.** The dashboard warns you if Docker is not running.
+- **The first run needs internet and takes longer.** Docker downloads the software images, and
+  metagenomics downloads its Kraken2 database (Standard-8 ≈ 8 GB). Later runs reuse both.
+- **Disk space:** keep at least 30–50 GB free for containers, databases and intermediate files
+  (about 45 GB more for eggNOG functional annotation). Old `work/` folders can be deleted after a run finishes.
+- **Memory:** 8 GB is enough for the built-in test data and most amplicon runs. Use 16 GB or more for real
+  metagenomics or assembly, and give Docker that memory in *Docker Desktop → Settings → Resources*.
+- **Windows:** Nextflow does not run on Windows directly. Install
+  [WSL2](https://learn.microsoft.com/windows/wsl/install) (Ubuntu), then install Java, Nextflow and HOMES
+  inside it and start the dashboard from the Ubuntu terminal. The Windows `.bat` launcher alone cannot run
+  analyses.
+- **First analysis:** choose *Built-in test data* in **New analysis** to confirm everything works before
+  using your own samples.
+
 ## Start
 
 From the HOMES folder:
@@ -52,6 +90,7 @@ Options:
 python3 dashboard/homes_dashboard.py --port 9000        # use another port
 python3 dashboard/homes_dashboard.py --no-browser       # don't open a window automatically
 python3 dashboard/homes_dashboard.py --browser          # open in a normal browser tab instead of an app window
+python3 dashboard/homes_dashboard.py --check            # check that this computer is ready, then exit
 ```
 
 On a remote server, keep the default address and use an SSH tunnel instead of opening the port:

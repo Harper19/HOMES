@@ -243,6 +243,7 @@ table.sheet td.idx { color: var(--muted); text-align: right; padding: 6px 8px; w
 .check .icon { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; }
 .check .icon.ok { background: var(--good-soft); color: var(--good); }
 .check .icon.no { background: var(--bad-soft); color: var(--bad); }
+.check .icon.warn { background: var(--warn-soft); color: var(--warn); }
 .check .icon.opt { background: var(--surface-2); color: var(--muted); }
 
 /* ---------- hero ---------- */

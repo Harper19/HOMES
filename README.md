@@ -76,9 +76,11 @@ cd HOMES
 
 ## Dashboard (no command line)
 
-Prefer clicking to typing? Start the HOMES dashboard from the repository folder:
+Prefer clicking to typing? First install Docker Desktop, Java 17+ and Nextflow (see [Installation](#installation)),
+then check that your computer is ready and start the HOMES dashboard from the repository folder:
 
 ```bash
+python3 dashboard/homes_dashboard.py --check   # lists anything still missing, with download links
 python3 dashboard/homes_dashboard.py
 ```
 
@@ -87,8 +89,8 @@ app (macOS Applications folder, Windows Desktop, or Linux applications menu).
 
 It opens in its own window and guides you through choosing a workflow, building a samplesheet (it can find
 and pair your FASTQ files automatically), starting the run, following its progress, and opening the HTML
-report. It also checks whether Nextflow, Java and Docker are installed. See
-[dashboard/README.md](dashboard/README.md).
+report. Remember to open Docker Desktop before each analysis. Disk space, memory and Windows (WSL2) notes are in
+[dashboard/README.md](dashboard/README.md#before-you-start).
 
 ## Amplicon Module
 

@@ -215,7 +215,8 @@
     <!-- ================= SETUP ================= -->
     <section class="view" id="view-setup">
       <h2>Setup check</h2>
-      <p class="muted">HOMES needs Java 17+, Nextflow and one container engine. This page checks this computer.</p>
+      <p class="muted">HOMES needs Docker Desktop (or Singularity on servers), Java 17+ and Nextflow, plus enough disk space and memory.
+        This page checks this computer. The same check runs in a terminal with <code>python3 dashboard/homes_dashboard.py --check</code>.</p>
       <div class="card" id="setup-checks"></div>
       <div class="card server-only">
         <h3>Dashboard app</h3>

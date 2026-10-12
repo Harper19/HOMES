@@ -140,6 +140,160 @@ def check_tools():
     return tools
 
 
+LINKS = {
+    "docker": "https://docs.docker.com/get-started/get-docker/",
+    "java": "https://adoptium.net/temurin/releases/?version=17",
+    "nextflow": "https://www.nextflow.io/docs/latest/install.html",
+    "wsl": "https://learn.microsoft.com/windows/wsl/install",
+    "chrome": "https://www.google.com/chrome/",
+}
+MIN_DISK_GB = 30
+MIN_RAM_GB = 8
+GOOD_RAM_GB = 16
+
+
+def _java_major(version_line):
+    m = re.search(r'version "?(\d+)(?:\.(\d+))?', version_line or "")
+    if not m:
+        return None
+    major = int(m.group(1))
+    return int(m.group(2) or 0) if major == 1 else major  # "1.8.0" means Java 8
+
+
+def _total_ram_gb():
+    try:
+        if sys.platform == "darwin":
+            out = subprocess.run(["sysctl", "-n", "hw.memsize"], capture_output=True, text=True, timeout=5)
+            return int(out.stdout.strip()) / 1024 ** 3
+        if sys.platform.startswith("linux"):
+            with open("/proc/meminfo") as fh:
+                for line in fh:
+                    if line.startswith("MemTotal:"):
+                        return int(line.split()[1]) / 1024 ** 2
+    except (OSError, ValueError, subprocess.SubprocessError):
+        pass
+    return None
+
+
+def _docker_ram_gb():
+    try:
+        out = subprocess.run(["docker", "info", "--format", "{{.MemTotal}}"], capture_output=True, text=True, timeout=20)
+        return int(out.stdout.strip()) / 1024 ** 3 if out.returncode == 0 else None
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+def system_checks(tools=None):
+    """Everything a user needs before running HOMES, as a list of plain-language checks.
+
+    status: ok | warn (works, but read the note) | missing (must fix) | optional (not needed for most users)
+    """
+    tools = tools or check_tools()
+    checks = []
+
+    def add(cid, title, status, detail, fix=None, link=None):
+        checks.append({"id": cid, "title": title, "status": status, "detail": detail, "fix": fix, "link": link})
+
+    if os.name == "nt":
+        add("os", "Operating system", "missing", "Windows cannot run Nextflow directly.",
+            "Install WSL2 (Ubuntu), then install Java, Nextflow and HOMES inside it and start the dashboard from there.",
+            LINKS["wsl"])
+    else:
+        add("os", "Operating system", "ok", {"darwin": "macOS"}.get(sys.platform, "Linux"))
+
+    add("python", "Python", "ok", "Python " + ".".join(map(str, sys.version_info[:3])))
+
+    j = tools["java"]
+    major = _java_major(j.get("version")) if j["found"] else None
+    if not j["found"]:
+        add("java", "Java 17 or newer", "missing", "Java was not found.", "Install Temurin 17 (or newer) and restart the dashboard.", LINKS["java"])
+    elif major is not None and major < 17:
+        add("java", "Java 17 or newer", "missing", f"Java {major} is too old for Nextflow.", "Install Temurin 17 (or newer).", LINKS["java"])
+    else:
+        add("java", "Java 17 or newer", "ok", j.get("version") or "found")
+
+    n = tools["nextflow"]
+    if n["found"]:
+        add("nextflow", "Nextflow", "ok", "Version " + (n.get("version") or "?"))
+    else:
+        add("nextflow", "Nextflow", "missing", "Nextflow was not found.",
+            'Run: curl -s https://get.nextflow.io | bash && mkdir -p ~/.local/bin && mv nextflow ~/.local/bin/', LINKS["nextflow"])
+
+    d = tools["docker"]
+    other_engine = tools["singularity"]["found"] or tools["apptainer"]["found"]
+    if d["found"] and d.get("running"):
+        add("docker", "Docker", "ok", d.get("version") or "running")
+        mem = _docker_ram_gb()
+        if mem is not None and mem < MIN_RAM_GB - 0.5:
+            add("docker_mem", "Memory available to Docker", "warn", f"Docker may use only {mem:.0f} GB.",
+                "Docker Desktop → Settings → Resources: give Docker at least 8 GB (16 GB+ for real metagenomics / assembly).")
+        elif mem is not None:
+            add("docker_mem", "Memory available to Docker", "ok", f"{mem:.0f} GB")
+    elif d["found"]:
+        add("docker", "Docker", "warn" if other_engine else "missing", "Installed but not running.",
+            "Open Docker Desktop and wait until it says it is running. Do this every time before you start an analysis.")
+    elif other_engine:
+        add("docker", "Docker", "optional", "Not found. Singularity/Apptainer will be used instead (servers/HPC).")
+    else:
+        add("docker", "Docker", "missing", "No container engine found.",
+            "Install Docker Desktop. It provides all the bioinformatics software automatically.", LINKS["docker"])
+
+    if other_engine:
+        t = tools["singularity"] if tools["singularity"]["found"] else tools["apptainer"]
+        add("singularity", "Singularity / Apptainer", "ok", t.get("version") or "found")
+
+    try:
+        free = int(shutil.disk_usage(REPO_ROOT).free / 1024 ** 3)
+        if free < 10:
+            add("disk", "Free disk space", "missing", f"Only {free:.0f} GB free.",
+                f"Free at least {MIN_DISK_GB} GB: containers, databases (Standard-8 ≈ 8 GB, eggNOG ≈ 45 GB) and intermediate files need room.")
+        elif free < MIN_DISK_GB:
+            add("disk", "Free disk space", "warn", f"{free:.0f} GB free.",
+                f"Enough for test runs. Real analyses need {MIN_DISK_GB}–50 GB+ (more with eggNOG functional annotation).")
+        else:
+            add("disk", "Free disk space", "ok", f"{free:.0f} GB free")
+    except OSError:
+        pass
+
+    ram = _total_ram_gb()
+    if ram is not None:
+        if ram < MIN_RAM_GB - 0.5:
+            add("ram", "Memory (RAM)", "warn", f"{ram:.0f} GB.", "Test runs may work; real analyses need 16 GB or more, or a server.")
+        elif ram < GOOD_RAM_GB - 0.5:
+            add("ram", "Memory (RAM)", "warn", f"{ram:.0f} GB.", "Fine for amplicon and test runs; metagenomics / assembly work best with 16 GB+.")
+        else:
+            add("ram", "Memory (RAM)", "ok", f"{ram:.0f} GB")
+
+    add("chrome", "Chrome or Edge", "ok" if _app_browser() else "optional",
+        "Found – the dashboard opens in its own app window." if _app_browser()
+        else "Not found – the dashboard opens in your normal browser instead.", None, None if _app_browser() else LINKS["chrome"])
+    return checks
+
+
+def print_checks():
+    """Terminal version of the Setup page. Returns the exit code (1 when something must be fixed)."""
+    color = sys.stdout.isatty() and os.name != "nt"
+    marks = {"ok": ("✓", "32"), "warn": ("!", "33"), "missing": ("✗", "31"), "optional": ("–", "90")}
+    print("\nHOMES setup check\n")
+    checks = system_checks()
+    for c in checks:
+        sym, code = marks[c["status"]]
+        sym = f"\033[{code}m{sym}\033[0m" if color else sym
+        print(f"  {sym} {c['title']}: {c['detail']}")
+        if c["fix"] and c["status"] in ("missing", "warn"):
+            print(f"      → {c['fix']}")
+        if c["link"] and c["status"] != "ok":
+            print(f"      → {c['link']}")
+    missing = [c for c in checks if c["status"] == "missing"]
+    print()
+    if missing:
+        print(f"{len(missing)} thing(s) to fix before running HOMES: " + ", ".join(c["title"] for c in missing))
+        return 1
+    print("Ready. Start the dashboard with:  python3 dashboard/homes_dashboard.py")
+    print("First run tip: choose 'Built-in test data' to confirm everything works.")
+    return 0
+
+
 # --------------------------------------------------------------------------- #
 # Runs
 # --------------------------------------------------------------------------- #
@@ -625,8 +779,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         try:
             if path == "/api/status":
-                return self._send(200, {"server": True, "repo": str(REPO_ROOT), "tools": check_tools(),
-                                        "platform": sys.platform})
+                tools = check_tools()
+                return self._send(200, {"server": True, "repo": str(REPO_ROOT), "tools": tools,
+                                        "checks": system_checks(tools), "platform": sys.platform})
             if path == "/api/runs":
                 return self._send(200, {"runs": list_runs()})
             m = re.fullmatch(r"/api/runs/([^/]+)/log", path)
@@ -850,15 +1005,19 @@ def main():
     ap.add_argument("--no-browser", action="store_true", help="do not open a window")
     ap.add_argument("--browser", action="store_true",
                     help="open in a normal browser tab instead of a standalone app window")
+    ap.add_argument("--check", action="store_true",
+                    help="check that Java, Nextflow, Docker, disk space and memory are ready, then exit")
     ap.add_argument("--install-app", action="store_true",
                     help="create a double-clickable app / menu entry for this computer and exit")
     args = ap.parse_args()
 
     STATE_DIR.mkdir(parents=True, exist_ok=True)
+    _augment_path()
+    if args.check:
+        sys.exit(print_checks())
     if args.install_app:
         install_app()
         return
-    _augment_path()
     window_mode = "browser" if args.browser else "app"
 
     if _already_running(args.port):

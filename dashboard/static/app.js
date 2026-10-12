@@ -383,7 +383,7 @@
     $("#cmd-preview").textContent = formatCommand(argv);
     const { errors, warnings } = validate();
     const box = $("#validation");
-    setKids(box, );
+    setKids(box);
     if (errors.length) box.append(h("div", { class: "note bad" }, h("b", {}, "Before you can start:"), h("ul", {}, ...errors.map((e) => h("li", {}, e)))));
     if (warnings.length) box.append(h("div", { class: "note warn" }, h("ul", {}, ...warnings.map((e) => h("li", {}, e)))));
     if (!errors.length && !warnings.length) box.append(h("div", { class: "note good" }, "Everything looks ready."));
@@ -448,23 +448,17 @@
         h("p", { class: "muted small", style: "margin:8px 0 0" }, w.description),
         h("div", { class: "tag" }, w.platforms.map((p) => p.label).join(" · ")))));
     const box = $("#home-setup");
-    setKids(box, );
+    setKids(box);
     if (!state.server) {
       box.append(h("div", { class: "note info" },
         h("b", {}, "Command-builder mode. "),
         "This page can build commands and samplesheets. To start runs, follow progress and open reports from here, run ",
         h("code", {}, "python3 dashboard/homes_dashboard.py"), " in the HOMES folder."));
     } else if (state.status) {
-      const t = state.status.tools;
-      const missing = [];
-      if (!t.nextflow.found) missing.push("Nextflow");
-      if (!t.java.found) missing.push("Java");
-      if (!t.docker.found && !t.singularity.found && !t.apptainer.found) missing.push("a container engine (Docker or Singularity)");
+      const missing = (state.status.checks || []).filter((c) => c.status === "missing");
       if (missing.length) {
-        box.append(h("div", { class: "note warn" }, "Missing on this computer: " + missing.join(", ") + ". ",
+        box.append(h("div", { class: "note warn" }, "Before your first analysis, fix: " + missing.map((c) => c.title).join(", ") + ". ",
           h("a", { href: "#", "data-goto": "setup" }, "Open setup steps →")));
-      } else if (t.docker.found && t.docker.running === false && !t.singularity.found && !t.apptainer.found) {
-        box.append(h("div", { class: "note warn" }, "Docker is installed but not running. Open Docker Desktop before starting an analysis."));
       }
     }
   }
@@ -751,7 +745,7 @@
 
   function renderRunDetail(run) {
     const box = $("#run-detail");
-    if (!run) { setKids(box, ); return; }
+    if (!run) { setKids(box); return; }
     const prog = run.progress || { steps: [] };
     const hint = prog.error ? (HINTS.find(([re]) => re.test(prog.error)) || [null, null])[1] : null;
     const logPre = h("pre", { class: "log", id: "run-log" });
@@ -902,26 +896,22 @@
         h("code", {}, "java -version"), ", ", h("code", {}, "nextflow info"), " and ", h("code", {}, "docker run hello-world"), "."));
       return;
     }
-    const t = state.status.tools;
-    const item = (ok, title, detail, optional) => h("div", { class: "check" },
-      h("div", { class: "icon " + (ok ? "ok" : optional ? "opt" : "no") }, ok ? "✓" : optional ? "–" : "✗"),
-      h("div", {}, h("b", {}, title), h("div", { class: "muted small" }, detail)));
-    const engineOk = (t.docker.found && t.docker.running !== false) || t.singularity.found || t.apptainer.found;
-    setKids(box, 
+    const checks = state.status.checks || [];
+    const icons = { ok: ["ok", "✓"], warn: ["warn", "!"], missing: ["no", "✗"], optional: ["opt", "–"] };
+    const missing = checks.filter((c) => c.status === "missing");
+    setKids(box,
       h("div", { class: "row" }, h("h3", { style: "margin:0;flex:1" }, "This computer"),
         h("button", { class: "btn small", onclick: async () => { state.status = await api("/api/status"); renderSetup(); renderForm(); renderHome(); toast("Checked again"); } }, "Check again")),
-      item(t.java.found, "Java", t.java.found ? t.java.version : "Not found. Install Java 17 or newer."),
-      item(t.nextflow.found, "Nextflow", t.nextflow.found ? "Version " + (t.nextflow.version || "?") : "Not found. Follow the install steps below."),
-      item(t.docker.found && t.docker.running !== false, "Docker",
-        !t.docker.found ? "Not found. Needed on laptops/workstations." : t.docker.running === false ? "Installed but not running – open Docker Desktop." : t.docker.version,
-        !engineOk ? false : true),
-      item(t.singularity.found || t.apptainer.found, "Singularity / Apptainer",
-        t.singularity.found ? t.singularity.version : t.apptainer.found ? t.apptainer.version : "Not found (only needed on servers/HPC).", true),
-      item(t.sbatch.found || t.qsub.found, "HPC scheduler", t.sbatch.found ? "SLURM detected" : t.qsub.found ? "PBS detected" : "None detected (only needed on clusters).", true),
+      ...checks.map((c) => h("div", { class: "check" },
+        h("div", { class: "icon " + icons[c.status][0] }, icons[c.status][1]),
+        h("div", {},
+          h("b", {}, c.title), " ", h("span", { class: "muted small" }, c.detail),
+          c.fix && (c.status === "missing" || c.status === "warn") ? h("div", { class: "small" }, "→ " + c.fix) : null,
+          c.link && c.status !== "ok" ? h("div", { class: "small" }, h("a", { href: c.link, target: "_blank", rel: "noopener" }, "Download / instructions ↗")) : null))),
       h("p", { class: "muted small", style: "margin-top:10px" }, "HOMES folder: ", h("code", {}, state.status.repo)),
-      engineOk && t.nextflow.found && t.java.found
-        ? h("div", { class: "note good" }, "All set. Try a test run: ", h("a", { href: "#", "data-goto": "new" }, "New analysis → Built-in test data"))
-        : null);
+      missing.length
+        ? h("div", { class: "note bad" }, "Fix before running: " + missing.map((c) => c.title).join(", ") + ". Then press “Check again”.")
+        : h("div", { class: "note good" }, "All set. Try a test run: ", h("a", { href: "#", "data-goto": "new" }, "New analysis → Built-in test data")));
   }
 
   // ------------------------------------------------------- file browser --
