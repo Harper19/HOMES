@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="homes-token" content="__HOMES_TOKEN__">
+  <title>HOMES Dashboard</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0f7a5c">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand">
+        <img class="brand-mark" src="icon.svg" alt="">
+        <div>HOMES Dashboard<small>Harmonizing 'Omics for Managing Environmental Systems</small></div>
+      </div>
+      <span id="conn" class="conn off">Checking…</span>
+      <nav class="tabs" id="tabs">
+        <button data-view="home" class="active">Home</button>
+        <button data-view="new">New analysis</button>
+        <button data-view="sheet">Samplesheet</button>
+        <button data-view="runs">Runs <span id="running-count" class="count hidden">0</span></button>
+        <button data-view="results">Results</button>
+        <button data-view="setup">Setup</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ================= HOME ================= -->
+    <section class="view active" id="view-home">
+      <div class="hero">
+        <div>
+          <h2>Microbiome analysis for wastewater and environmental samples</h2>
+          <p class="muted">Pick what you want to learn, point HOMES at your sequencing files, and get quality checks,
+            taxonomy, abundance tables and a shareable HTML report. No command line needed.</p>
+          <div class="row">
+            <button class="btn primary big" data-goto="new">Start a new analysis</button>
+            <button class="btn big" data-goto="results">Open results</button>
+          </div>
+        </div>
+        <img src="../../workflows/HOMES_amplicon/assets/homes_report_logo.svg" alt="HOMES logo" onerror="this.remove()">
+      </div>
+      <div id="home-setup"></div>
+      <h3>What would you like to find out?</h3>
+      <div class="choices" id="home-workflows"></div>
+      <div class="grid cols-2" style="margin-top:20px">
+        <div class="card">
+          <h3>How it works</h3>
+          <ol class="muted" style="padding-left:20px;margin:0">
+            <li><b>Setup</b> – check that Nextflow and Docker are installed (once).</li>
+            <li><b>Samplesheet</b> – list your samples and FASTQ files, or let HOMES find them in a folder.</li>
+            <li><b>New analysis</b> – choose the workflow and options, then press <i>Start</i>.</li>
+            <li><b>Runs</b> – follow progress live.</li>
+            <li><b>Results</b> – open the HTML report and tables.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Recent runs</h3>
+          <div id="home-runs" class="muted small">No runs yet.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= NEW ANALYSIS ================= -->
+    <section class="view" id="view-new">
+      <h2>New analysis</h2>
+      <p class="muted">Work through the steps from top to bottom. The command at the end updates as you go.</p>
+
+      <div class="step"><div class="step-num">1</div><div class="step-body">
+        <h3>What do you want to find out?</h3>
+        <div class="choices" id="wf-choices"></div>
+      </div></div>
+
+      <div class="step"><div class="step-num">2</div><div class="step-body">
+        <h3>How were the samples sequenced?</h3>
+        <div class="choices" id="platform-choices"></div>
+      </div></div>
+
+      <div class="step"><div class="step-num">3</div><div class="step-body">
+        <h3>Which data?</h3>
+        <div class="choices" id="mode-choices"></div>
+        <div id="mode-note"></div>
+      </div></div>
+
+      <div class="step"><div class="step-num">4</div><div class="step-body">
+        <h3>Where should it run?</h3>
+        <p class="muted small">Containers download all the bioinformatics software automatically.</p>
+        <div class="choices" id="engine-choices"></div>
+      </div></div>
+
+      <div class="step" id="step-options"><div class="step-num">5</div><div class="step-body">
+        <h3>Your data and options</h3>
+        <p class="muted small">Relative paths are read from the HOMES folder. Every option has a short explanation underneath; defaults work for most data.</p>
+        <div class="card">
+          <div class="fields" id="fields-basic"></div>
+          <details class="advanced" id="adv-wrap">
+            <summary>Advanced options</summary>
+            <div class="fields" id="fields-adv"></div>
+          </details>
+        </div>
+      </div></div>
+
+      <div class="step"><div class="step-num" id="step-out-num">6</div><div class="step-body">
+        <h3>Name and save</h3>
+        <div class="card">
+          <div class="fields">
+            <div class="field">
+              <label class="lbl" for="run-label">Analysis name</label>
+              <input type="text" id="run-label" placeholder="e.g. Plant A influent – May">
+              <div class="help">Only used to recognise this run in the dashboard.</div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="outdir">Results folder<span class="req">*</span></label>
+              <div class="input-group">
+                <input type="text" id="outdir">
+                <button class="btn small server-only" data-browse="outdir" data-pick="folder">Browse…</button>
+              </div>
+              <div class="help">Where reports and tables are written. Created if it does not exist.</div>
+            </div>
+            <div class="field">
+              <label class="toggle"><input type="checkbox" id="resume" checked><span class="track"></span>
+                <span><b>Resume</b> – reuse finished steps if this was run before</span></label>
+            </div>
+          </div>
+          <details class="advanced">
+            <summary>Expert: extra command-line arguments</summary>
+            <input type="text" id="extra-args" placeholder="e.g. --max_cpus 8 -c my_site.config">
+            <div class="help">Appended as-is to the Nextflow command.</div>
+          </details>
+        </div>
+      </div></div>
+
+      <div class="step"><div class="step-num" id="step-run-num">7</div><div class="step-body">
+        <h3>Check and start</h3>
+        <div id="validation"></div>
+        <pre class="cmd" id="cmd-preview"></pre>
+        <div class="row" style="margin-top:12px">
+          <button class="btn primary big server-only" id="btn-launch">▶ Start analysis</button>
+          <button class="btn" id="btn-copy">Copy command</button>
+          <button class="btn" id="btn-script">Download as script</button>
+          <span class="spacer"></span>
+          <button class="btn small" id="btn-reset">Reset form</button>
+        </div>
+        <div class="note info static-only small">You are using the dashboard without its local server, so it cannot start runs itself.
+          Copy the command and paste it into a terminal inside the HOMES folder, or start the full dashboard with
+          <code>python3 dashboard/homes_dashboard.py</code>.</div>
+      </div></div>
+    </section>
+
+    <!-- ================= SAMPLESHEET ================= -->
+    <section class="view" id="view-sheet">
+      <h2>Samplesheet builder</h2>
+      <p class="muted">A samplesheet tells HOMES which FASTQ files belong to which sample. Fill the table, let the
+        dashboard find files in a folder, or paste from Excel.</p>
+      <div class="card">
+        <div class="row">
+          <label class="lbl" for="sheet-layout"><b>Layout for</b></label>
+          <select id="sheet-layout" style="width:auto"></select>
+          <span class="spacer"></span>
+          <button class="btn server-only" id="sheet-scan">📁 Add files from a folder…</button>
+          <button class="btn" id="sheet-paste">Paste / import…</button>
+          <button class="btn" id="sheet-add">+ Add row</button>
+          <button class="btn danger" id="sheet-clear">Clear</button>
+        </div>
+        <p class="muted small" id="sheet-hint" style="margin-top:8px"></p>
+        <div class="table-wrap" style="margin-top:8px"><table class="sheet" id="sheet-table"></table></div>
+        <div id="sheet-validation"></div>
+      </div>
+      <div class="card">
+        <h3>Save</h3>
+        <div class="row">
+          <input type="text" id="sheet-path" style="flex:1;min-width:240px" placeholder="samplesheets/my_samples.csv">
+          <button class="btn server-only" data-browse="sheet-path" data-pick="folder" data-append="my_samples">Browse…</button>
+          <button class="btn primary server-only" id="sheet-save">Save file</button>
+          <button class="btn" id="sheet-download">Download</button>
+          <button class="btn" id="sheet-use">Use in new analysis →</button>
+        </div>
+        <p class="muted small" style="margin-top:8px">Saved files are written relative to the HOMES folder unless you give a full path.</p>
+      </div>
+    </section>
+
+    <!-- ================= RUNS ================= -->
+    <section class="view" id="view-runs">
+      <div class="row"><h2 style="margin:0">Runs</h2><span class="spacer"></span>
+        <button class="btn small server-only" id="runs-refresh">Refresh</button></div>
+      <div class="static-only note info">Run tracking needs the local server: <code>python3 dashboard/homes_dashboard.py</code></div>
+      <div class="grid" style="grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr); margin-top:14px" id="runs-grid">
+        <div class="list" id="runs-list"></div>
+        <div id="run-detail"></div>
+      </div>
+    </section>
+
+    <!-- ================= RESULTS ================= -->
+    <section class="view" id="view-results">
+      <div class="row"><h2 style="margin:0">Results</h2><span class="spacer"></span>
+        <button class="btn small server-only" id="results-refresh">Refresh</button></div>
+      <p class="muted">Folders under <code>results/</code>, folders of dashboard runs, and any folder you add here.</p>
+      <div class="static-only note info">Browsing results needs the local server: <code>python3 dashboard/homes_dashboard.py</code>.
+        Without it, open <code>report/*.html</code> inside your results folder directly in a browser.</div>
+      <div class="card server-only">
+        <div class="row">
+          <input type="text" id="results-add-path" style="flex:1;min-width:240px" placeholder="/path/to/an/existing/results/folder">
+          <button class="btn" data-browse="results-add-path" data-pick="folder">Browse…</button>
+          <button class="btn primary" id="results-add">Add folder</button>
+        </div>
+      </div>
+      <div class="list" id="results-list"></div>
+    </section>
+
+    <!-- ================= SETUP ================= -->
+    <section class="view" id="view-setup">
+      <h2>Setup check</h2>
+      <p class="muted">HOMES needs Docker Desktop (or Singularity on servers), Java 17+ and Nextflow, plus enough disk space and memory.
+        This page checks this computer. The same check runs in a terminal with <code>python3 dashboard/homes_dashboard.py --check</code>.</p>
+      <div class="card" id="setup-checks"></div>
+      <div class="card server-only">
+        <h3>Dashboard app</h3>
+        <p class="muted">Open the dashboard like a normal program by double-clicking an icon. Run this once in the HOMES folder:</p>
+        <pre class="cmd">python3 dashboard/homes_dashboard.py --install-app</pre>
+        <p class="muted small" style="margin-top:8px">macOS: creates <b>HOMES Dashboard</b> in your Applications folder (drag it to the Dock).
+          Windows: a shortcut on the Desktop. Linux: an entry in the applications menu.
+          In Chrome or Edge you can also use the <i>Install</i> icon in the address bar.</p>
+        <div class="row" style="margin-top:12px">
+          <button class="btn danger" id="btn-quit">Quit dashboard</button>
+          <span class="muted small">Stops the dashboard. Analyses that are running keep going.</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Install steps</h3>
+        <h4>1. Docker (laptop / workstation)</h4>
+        <p>Install <a href="https://docs.docker.com/get-started/get-docker/" target="_blank" rel="noopener">Docker Desktop</a>, open it, and wait until it says it is running.</p>
+        <h4>2. Java 17 or newer</h4>
+        <p>Check with <code>java -version</code>. If missing, install e.g. <a href="https://adoptium.net/" target="_blank" rel="noopener">Temurin 17</a>.</p>
+        <h4>3. Nextflow</h4>
+        <pre class="cmd">curl -s https://get.nextflow.io | bash
+chmod +x nextflow
+mkdir -p "$HOME/.local/bin"
+mv nextflow "$HOME/.local/bin/"
+export PATH="$PATH:$HOME/.local/bin"
+nextflow info</pre>
+        <p class="muted small" style="margin-top:8px">Restart the dashboard after installing so it picks up the new <code>PATH</code>.</p>
+        <h4>4. Try a test run</h4>
+        <p>Go to <a href="#" data-goto="new">New analysis</a>, pick any workflow and choose <b>Built-in test data</b>.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="modal-root"></div>
+  <script src="workflows.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -43,6 +43,10 @@ db/
 !workflows/HOMES_metagenomics/assets/testdata/functional/
 !workflows/HOMES_metagenomics/assets/testdata/functional/*.fna
 
+# HOMES dashboard run logs and state
+.homes_dashboard/
+__pycache__/
+
 # Temporary files
 tmp/
 *.tmp
