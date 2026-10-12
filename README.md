@@ -82,7 +82,10 @@ Prefer clicking to typing? Start the HOMES dashboard from the repository folder:
 python3 dashboard/homes_dashboard.py
 ```
 
-It opens in your browser and guides you through choosing a workflow, building a samplesheet (it can find
+Run `python3 dashboard/homes_dashboard.py --install-app` once to get a double-clickable **HOMES Dashboard**
+app (macOS Applications folder, Windows Desktop, or Linux applications menu).
+
+It opens in its own window and guides you through choosing a workflow, building a samplesheet (it can find
 and pair your FASTQ files automatically), starting the run, following its progress, and opening the HTML
 report. It also checks whether Nextflow, Java and Docker are installed. See
 [dashboard/README.md](dashboard/README.md).

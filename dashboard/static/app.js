@@ -29,6 +29,11 @@
     return el;
   }
 
+  // Like el.replaceChildren(), but skips null/false (the DOM would print them as text).
+  function setKids(el, ...kids) {
+    el.replaceChildren(...kids.flat().filter((c) => c != null && c !== false));
+  }
+
   function toast(msg, ms) {
     const t = h("div", { class: "toast", role: "status" }, msg);
     document.body.append(t);
@@ -164,14 +169,14 @@
     if (!state.form.outdirTouched) state.form.outdir = defaultOutdir();
 
     const wfBox = $("#wf-choices");
-    wfBox.replaceChildren(...WORKFLOWS.map((w) =>
+    setKids(wfBox, ...WORKFLOWS.map((w) =>
       h("button", { class: "choice" + (w.id === wf.id ? " selected" : ""), type: "button",
         onclick: () => { state.form.wf = w.id; renderForm(); } },
         h("div", { class: "t" }, w.title), h("div", { class: "s" }, w.subtitle),
         h("div", { class: "q" }, w.question))));
 
     const p = curPlatform();
-    $("#platform-choices").replaceChildren(...wf.platforms.map((pl) =>
+    setKids($("#platform-choices"), ...wf.platforms.map((pl) =>
       h("button", { class: "choice compact" + (pl.id === p.id ? " selected" : ""), type: "button",
         onclick: () => { state.form.platform = pl.id; renderForm(); } },
         h("div", { class: "t" }, pl.label), h("div", { class: "s" }, pl.desc))));
@@ -180,15 +185,15 @@
       ["test", "Built-in test data", "A tiny bundled dataset. Use this first to check that everything is installed. Takes minutes."],
       ["own", "My own data", "Analyse your samples. You will point HOMES at a samplesheet or FASTQ files."],
     ];
-    $("#mode-choices").replaceChildren(...modes.map(([id, t, s]) =>
+    setKids($("#mode-choices"), ...modes.map(([id, t, s]) =>
       h("button", { class: "choice compact" + (state.form.mode === id ? " selected" : ""), type: "button",
         onclick: () => { state.form.mode = id; renderForm(); } },
         h("div", { class: "t" }, t), h("div", { class: "s" }, s))));
-    $("#mode-note").replaceChildren(
+    setKids($("#mode-note"), 
       state.form.mode === "test" && wf.testNote ? h("div", { class: "note info small" }, wf.testNote) : "");
 
     const tools = state.status && state.status.tools;
-    $("#engine-choices").replaceChildren(...wf.engines.map((id) => {
+    setKids($("#engine-choices"), ...wf.engines.map((id) => {
       const e = ENGINES[id];
       let tag = null;
       if (tools && e.tool && tools[e.tool]) {
@@ -257,15 +262,15 @@
     const visible = wf.fields.filter(fieldVisible);
     const basic = visible.filter((f) => !f.advanced);
     const adv = visible.filter((f) => f.advanced);
-    $("#fields-basic").replaceChildren(...basic.map(renderField));
-    $("#fields-adv").replaceChildren(...adv.map(renderField));
+    setKids($("#fields-basic"), ...basic.map(renderField));
+    setKids($("#fields-adv"), ...adv.map(renderField));
     $("#adv-wrap").classList.toggle("hidden", adv.length === 0);
     const hasOptions = visible.length > 0;
     $("#step-options").classList.toggle("hidden", !hasOptions);
     $("#step-out-num").textContent = hasOptions ? "6" : "5";
     $("#step-run-num").textContent = hasOptions ? "7" : "6";
     if (!basic.length && hasOptions) {
-      $("#fields-basic").replaceChildren(h("p", { class: "muted small" }, "Nothing required here – see advanced options if needed."));
+      setKids($("#fields-basic"), h("p", { class: "muted small" }, "Nothing required here – see advanced options if needed."));
     }
   }
 
@@ -378,7 +383,7 @@
     $("#cmd-preview").textContent = formatCommand(argv);
     const { errors, warnings } = validate();
     const box = $("#validation");
-    box.replaceChildren();
+    setKids(box, );
     if (errors.length) box.append(h("div", { class: "note bad" }, h("b", {}, "Before you can start:"), h("ul", {}, ...errors.map((e) => h("li", {}, e)))));
     if (warnings.length) box.append(h("div", { class: "note warn" }, h("ul", {}, ...warnings.map((e) => h("li", {}, e)))));
     if (!errors.length && !warnings.length) box.append(h("div", { class: "note good" }, "Everything looks ready."));
@@ -436,14 +441,14 @@
 
   // ------------------------------------------------------ home overview --
   function renderHome() {
-    $("#home-workflows").replaceChildren(...WORKFLOWS.map((w) =>
+    setKids($("#home-workflows"), ...WORKFLOWS.map((w) =>
       h("button", { class: "choice", type: "button", onclick: () => { state.form.wf = w.id; renderForm(); show("new"); } },
         h("div", { class: "t" }, w.title), h("div", { class: "s" }, w.subtitle),
         h("div", { class: "q" }, w.question),
         h("p", { class: "muted small", style: "margin:8px 0 0" }, w.description),
         h("div", { class: "tag" }, w.platforms.map((p) => p.label).join(" · ")))));
     const box = $("#home-setup");
-    box.replaceChildren();
+    setKids(box, );
     if (!state.server) {
       box.append(h("div", { class: "note info" },
         h("b", {}, "Command-builder mode. "),
@@ -467,7 +472,7 @@
   function renderHomeRuns() {
     const box = $("#home-runs");
     if (!state.runs.length) { box.textContent = state.server ? "No runs yet." : "Start the local server to track runs."; return; }
-    box.replaceChildren(...state.runs.slice(0, 5).map((r) =>
+    setKids(box, ...state.runs.slice(0, 5).map((r) =>
       h("div", { class: "row", style: "padding:4px 0" },
         h("span", { class: "pill " + r.status }, r.status),
         h("a", { href: "#", onclick: (e) => { e.preventDefault(); state.selectedRun = r.id; show("runs"); } }, r.label),
@@ -509,13 +514,13 @@
         return h("td", { class: bad ? "bad" : "" }, ctl);
       }),
       h("td", {}, h("button", { class: "btn small danger", title: "Remove row", onclick: () => { state.sheet.rows.splice(i, 1); save(); renderSheet(); } }, "✕"))));
-    table.replaceChildren(h("thead", {}, head), h("tbody", {}, ...rows));
+    setKids(table, h("thead", {}, head), h("tbody", {}, ...rows));
     if (!rows.length) {
       table.append(h("tbody", {}, h("tr", {}, h("td", { colspan: def.columns.length + 2, class: "muted", style: "padding:18px;text-align:center" },
         state.server ? "No samples yet – add files from a folder, paste a table, or add rows by hand." : "No samples yet – paste a table or add rows by hand."))));
     }
     const vbox = $("#sheet-validation");
-    vbox.replaceChildren();
+    setKids(vbox, );
     if (state.sheet.rows.length) {
       vbox.append(issues.messages.length
         ? h("div", { class: "note warn" }, h("ul", {}, ...issues.messages.map((m) => h("li", {}, m))))
@@ -717,12 +722,12 @@
   function renderRuns() {
     const list = $("#runs-list");
     if (!state.runs.length) {
-      list.replaceChildren(h("div", { class: "card muted" }, "No runs yet. ", h("a", { href: "#", "data-goto": "new" }, "Start a new analysis →")));
-      $("#run-detail").replaceChildren();
+      setKids(list, h("div", { class: "card muted" }, "No runs yet. ", h("a", { href: "#", "data-goto": "new" }, "Start a new analysis →")));
+      setKids($("#run-detail"), );
       return;
     }
     if (!state.selectedRun || !state.runs.some((r) => r.id === state.selectedRun)) state.selectedRun = state.runs[0].id;
-    list.replaceChildren(...state.runs.map((r) =>
+    setKids(list, ...state.runs.map((r) =>
       h("div", { class: "list-item clickable" + (r.id === state.selectedRun ? " selected" : ""),
         onclick: () => { state.selectedRun = r.id; renderRuns(); } },
         h("div", { class: "main" },
@@ -746,7 +751,7 @@
 
   function renderRunDetail(run) {
     const box = $("#run-detail");
-    if (!run) { box.replaceChildren(); return; }
+    if (!run) { setKids(box, ); return; }
     const prog = run.progress || { steps: [] };
     const hint = prog.error ? (HINTS.find(([re]) => re.test(prog.error)) || [null, null])[1] : null;
     const logPre = h("pre", { class: "log", id: "run-log" });
@@ -782,7 +787,7 @@
       h("h4", { style: "margin-top:16px" }, "Live log"),
       logPre,
     ];
-    box.replaceChildren(h("div", { class: "card" }, ...children));
+    setKids(box, h("div", { class: "card" }, ...children));
     if (state.logRun !== run.id) { state.logRun = run.id; state.logOffset = 0; state.logText = ""; }
     logPre.textContent = state.logText || "";
     logPre.scrollTop = logPre.scrollHeight;
@@ -815,15 +820,15 @@
   async function refreshResults() {
     if (!state.server) return;
     const list = $("#results-list");
-    list.replaceChildren(h("p", { class: "muted" }, "Looking for results…"));
+    setKids(list, h("p", { class: "muted" }, "Looking for results…"));
     let results;
     try { results = (await api("/api/results")).results; }
-    catch (e) { list.replaceChildren(h("div", { class: "note bad" }, e.message)); return; }
+    catch (e) { setKids(list, h("div", { class: "note bad" }, e.message)); return; }
     if (!results.length) {
-      list.replaceChildren(h("div", { class: "card muted" }, "No results yet. They appear here once an analysis has written to its results folder."));
+      setKids(list, h("div", { class: "card muted" }, "No results yet. They appear here once an analysis has written to its results folder."));
       return;
     }
-    list.replaceChildren(...results.map(renderResult));
+    setKids(list, ...results.map(renderResult));
   }
 
   const fileUrl = (p) => "/files" + p.split("/").map(encodeURIComponent).join("/");
@@ -871,6 +876,15 @@
   }
 
   $("#results-refresh").addEventListener("click", refreshResults);
+  $("#btn-quit").addEventListener("click", async () => {
+    const running = state.runs.filter((r) => r.status === "running").length;
+    if (!confirm("Quit the HOMES dashboard?" + (running ? `\n\n${running} analysis(es) will keep running; reopen the dashboard to see them.` : ""))) return;
+    try { await api("/api/shutdown", {}); } catch (e) { /* server already gone */ }
+    setKids(document.body, h("main", {}, h("div", { class: "card" },
+      h("h2", {}, "The HOMES dashboard has stopped."),
+      h("p", { class: "muted" }, "You can close this window. Open the HOMES Dashboard app again whenever you need it."))));
+    setTimeout(() => window.close(), 400);
+  });
   $("#results-add").addEventListener("click", async () => {
     const p = $("#results-add-path").value.trim();
     if (!p) return;
@@ -882,7 +896,7 @@
   function renderSetup() {
     const box = $("#setup-checks");
     if (!state.server) {
-      box.replaceChildren(h("div", { class: "note info" },
+      setKids(box, h("div", { class: "note info" },
         "Automatic checks need the local server. In a terminal, inside the HOMES folder, run ",
         h("code", {}, "python3 dashboard/homes_dashboard.py"), ". Until then, check manually with ",
         h("code", {}, "java -version"), ", ", h("code", {}, "nextflow info"), " and ", h("code", {}, "docker run hello-world"), "."));
@@ -893,7 +907,7 @@
       h("div", { class: "icon " + (ok ? "ok" : optional ? "opt" : "no") }, ok ? "✓" : optional ? "–" : "✗"),
       h("div", {}, h("b", {}, title), h("div", { class: "muted small" }, detail)));
     const engineOk = (t.docker.found && t.docker.running !== false) || t.singularity.found || t.apptainer.found;
-    box.replaceChildren(
+    setKids(box, 
       h("div", { class: "row" }, h("h3", { style: "margin:0;flex:1" }, "This computer"),
         h("button", { class: "btn small", onclick: async () => { state.status = await api("/api/status"); renderSetup(); renderForm(); renderHome(); toast("Checked again"); } }, "Check again")),
       item(t.java.found, "Java", t.java.found ? t.java.version : "Not found. Install Java 17 or newer."),
@@ -921,9 +935,9 @@
       const go = async (p) => {
         try {
           const res = await api("/api/browse?path=" + encodeURIComponent(p || ""));
-          current = res; selected = null; err.replaceChildren();
+          current = res; selected = null; setKids(err, );
           pathInput.value = res.path;
-          listBox.replaceChildren(
+          setKids(listBox, 
             res.parent ? h("div", { class: "fb-entry", onclick: () => go(res.parent) }, h("span", { class: "ic" }, "⬆"), "..") : null,
             ...res.entries.map((e) => {
               const row = h("div", { class: "fb-entry" },
@@ -938,7 +952,7 @@
               return row;
             }));
           if (!res.entries.length) listBox.append(h("p", { class: "muted small" }, "Empty folder."));
-        } catch (e) { err.replaceChildren(h("div", { class: "note bad" }, e.message)); }
+        } catch (e) { setKids(err, h("div", { class: "note bad" }, e.message)); }
       };
       let done = false;
       const finish = (v) => { if (done) return; done = true; close(); resolve(v); };

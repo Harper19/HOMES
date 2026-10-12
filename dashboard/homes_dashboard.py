@@ -105,7 +105,8 @@ def _tool_version(cmd):
     try:
         out = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
         text = (out.stdout or "") + (out.stderr or "")
-        line = next((l.strip() for l in text.splitlines() if l.strip()), "")
+        lines = [l.strip() for l in text.splitlines() if l.strip() and not l.startswith("Picked up ")]
+        line = next((l for l in lines if "version" in l.lower()), lines[0] if lines else "")
         return {"found": True, "version": line[:160], "path": exe}
     except (OSError, subprocess.SubprocessError):
         return {"found": True, "version": None, "path": exe}
@@ -523,6 +524,7 @@ def save_text_file(path, content, overwrite=False):
 class Handler(http.server.BaseHTTPRequestHandler):
     server_version = "HOMESDashboard/1.0"
     allowed_hosts = set()
+    httpd = None
 
     def log_message(self, fmt, *args):
         if os.environ.get("HOMES_DASHBOARD_VERBOSE"):
@@ -598,6 +600,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if STATIC_DIR not in fp.parents or not fp.is_file():
                 return self._error(404, "not found")
             ctype = mimetypes.guess_type(fp.name)[0] or "application/octet-stream"
+            if fp.suffix == ".webmanifest":
+                ctype = "application/manifest+json"
             return self._send(200, fp.read_bytes(), ctype)
 
         if path.startswith("/workflows/"):
@@ -664,6 +668,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     raise ValueError(f"not a folder: {p}")
                 remember_result_dir(p)
                 return self._send(200, describe_result_dir(p))
+            if path == "/api/shutdown":
+                threading.Thread(target=self.httpd.shutdown, daemon=True).start()
+                return self._send(200, {"ok": True})
             if path == "/api/results/forget":
                 forget_result_dir(body.get("path", ""))
                 return self._send(200, {"ok": True})
@@ -681,15 +688,186 @@ class ThreadingServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     allow_reuse_address = True
 
 
+APP_NAME = "HOMES Dashboard"
+DEFAULT_PORT = 8765
+
+
+def _augment_path():
+    """Apps started from Finder / a desktop menu get a minimal PATH; add the usual install locations."""
+    extra = [
+        Path.home() / ".local" / "bin",
+        Path.home() / "bin",
+        Path("/opt/homebrew/bin"),
+        Path("/usr/local/bin"),
+        Path.home() / "miniforge3" / "bin",
+        Path.home() / "miniconda3" / "bin",
+        Path.home() / "anaconda3" / "bin",
+        Path("/Applications/Docker.app/Contents/Resources/bin"),
+    ]
+    parts = os.environ.get("PATH", "").split(os.pathsep)
+    for d in extra:
+        if d.is_dir() and str(d) not in parts:
+            parts.append(str(d))
+    os.environ["PATH"] = os.pathsep.join(p for p in parts if p)
+
+
+def _app_browser():
+    """Find a Chromium-based browser that can open a page as a standalone app window."""
+    candidates = []
+    if sys.platform == "darwin":
+        for app in ("Google Chrome", "Microsoft Edge", "Chromium", "Brave Browser"):
+            for root in ("/Applications", str(Path.home() / "Applications")):
+                exe = Path(root) / f"{app}.app" / "Contents" / "MacOS" / app
+                candidates.append(str(exe))
+    elif os.name == "nt":
+        for env in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
+            base = os.environ.get(env)
+            if base:
+                candidates.append(os.path.join(base, "Microsoft", "Edge", "Application", "msedge.exe"))
+                candidates.append(os.path.join(base, "Google", "Chrome", "Application", "chrome.exe"))
+    else:
+        for name in ("google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "microsoft-edge", "brave-browser"):
+            exe = shutil.which(name)
+            if exe:
+                candidates.append(exe)
+    return next((c for c in candidates if os.path.isfile(c)), None)
+
+
+def open_window(url, mode="app"):
+    """Open the dashboard: as an app window (no tabs / address bar) when possible, else a browser tab."""
+    if mode == "app":
+        exe = _app_browser()
+        if exe:
+            profile = STATE_DIR / "app-window-profile"
+            try:
+                subprocess.Popen(
+                    [exe, f"--app={url}", f"--user-data-dir={profile}", "--window-size=1280,900",
+                     "--no-first-run", "--no-default-browser-check"],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=(os.name == "posix"))
+                return
+            except OSError:
+                pass
+    webbrowser.open(url)
+
+
+def _already_running(port):
+    """True if a HOMES dashboard already answers on this port."""
+    import urllib.request
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/static/index.html", timeout=1.5) as r:
+            return r.headers.get("Server", "").startswith("HOMESDashboard")
+    except Exception:
+        return False
+
+
+def install_app():
+    """Create a double-clickable launcher for this computer."""
+    script = Path(__file__).resolve()
+    python = sys.executable or "python3"
+    log = STATE_DIR / "dashboard.log"
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    if sys.platform == "darwin":
+        app = Path.home() / "Applications" / f"{APP_NAME}.app"
+        macos = app / "Contents" / "MacOS"
+        macos.mkdir(parents=True, exist_ok=True)
+        (app / "Contents" / "Info.plist").write_text(f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleName</key><string>{APP_NAME}</string>
+  <key>CFBundleDisplayName</key><string>{APP_NAME}</string>
+  <key>CFBundleIdentifier</key><string>org.homes.dashboard</string>
+  <key>CFBundleVersion</key><string>1.0</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleExecutable</key><string>launch</string>
+  <key>CFBundleIconFile</key><string>homes</string>
+  <key>LSUIElement</key><true/>
+</dict></plist>
+""", encoding="utf-8")
+        launcher = macos / "launch"
+        # A login shell picks up the PATH set in ~/.zprofile / ~/.zshrc (Nextflow, Java, conda...).
+        launcher.write_text(f"""#!/bin/zsh -l
+exec "{python}" "{script}" >> "{log}" 2>&1
+""", encoding="utf-8")
+        launcher.chmod(0o755)
+        _make_mac_icon(app / "Contents" / "Resources")
+        print(f"Created {app}\nOpen it from Finder > Applications (your home folder), Spotlight, or drag it to the Dock.")
+        return app
+    if os.name == "nt":
+        desktop = Path(os.environ.get("USERPROFILE", str(Path.home()))) / "Desktop"
+        desktop.mkdir(parents=True, exist_ok=True)
+        bat = desktop / f"{APP_NAME}.bat"
+        pyw = Path(python).with_name("pythonw.exe")
+        runner = pyw if pyw.exists() else Path(python)
+        bat.write_text(f'@echo off\r\nstart "" "{runner}" "{script}"\r\n', encoding="utf-8")
+        print(f"Created {bat} - double-click it to open the dashboard.")
+        return bat
+    apps = Path.home() / ".local" / "share" / "applications"
+    apps.mkdir(parents=True, exist_ok=True)
+    desktop = apps / "homes-dashboard.desktop"
+    icon = STATIC_DIR / "icon.svg"
+    desktop.write_text(f"""[Desktop Entry]
+Type=Application
+Name={APP_NAME}
+Comment=Run HOMES microbiome workflows
+Exec=sh -c '"{python}" "{script}" >> "{log}" 2>&1'
+Icon={icon}
+Terminal=false
+Categories=Science;Biology;
+""", encoding="utf-8")
+    desktop.chmod(0o755)
+    print(f"Created {desktop}\nThe dashboard now appears in your applications menu.")
+    return desktop
+
+
+def _make_mac_icon(resources):
+    """Best effort: turn icon.png into homes.icns with the macOS sips/iconutil tools."""
+    resources.mkdir(parents=True, exist_ok=True)
+    png = STATIC_DIR / "icon-512.png"
+    if not png.exists() or not shutil.which("iconutil") or not shutil.which("sips"):
+        return
+    iconset = STATE_DIR / "homes.iconset"
+    iconset.mkdir(parents=True, exist_ok=True)
+    try:
+        for size in (16, 32, 128, 256, 512):
+            for scale in (1, 2):
+                px = size * scale
+                name = f"icon_{size}x{size}{'@2x' if scale == 2 else ''}.png"
+                subprocess.run(["sips", "-z", str(px), str(px), str(png), "--out", str(iconset / name)],
+                               capture_output=True, check=True)
+        subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(resources / "homes.icns")],
+                       capture_output=True, check=True)
+    except (OSError, subprocess.SubprocessError):
+        pass
+    finally:
+        shutil.rmtree(iconset, ignore_errors=True)
+
+
 def main():
     ap = argparse.ArgumentParser(description="HOMES workflow dashboard")
     ap.add_argument("--host", default="127.0.0.1",
                     help="address to listen on (default 127.0.0.1 = this computer only)")
-    ap.add_argument("--port", type=int, default=8765)
-    ap.add_argument("--no-browser", action="store_true", help="do not open a browser window")
+    ap.add_argument("--port", type=int, default=DEFAULT_PORT)
+    ap.add_argument("--no-browser", action="store_true", help="do not open a window")
+    ap.add_argument("--browser", action="store_true",
+                    help="open in a normal browser tab instead of a standalone app window")
+    ap.add_argument("--install-app", action="store_true",
+                    help="create a double-clickable app / menu entry for this computer and exit")
     args = ap.parse_args()
 
     STATE_DIR.mkdir(parents=True, exist_ok=True)
+    if args.install_app:
+        install_app()
+        return
+    _augment_path()
+    window_mode = "browser" if args.browser else "app"
+
+    if _already_running(args.port):
+        url = f"http://127.0.0.1:{args.port}/"
+        print(f"HOMES dashboard is already running at {url} - opening it.")
+        if not args.no_browser:
+            open_window(url, window_mode)
+        return
+
     httpd = ThreadingServer((args.host, args.port), Handler)
     port = httpd.server_address[1]
     hosts = {f"{args.host}:{port}", f"127.0.0.1:{port}", f"localhost:{port}"}
@@ -698,12 +876,13 @@ def main():
               "port and load the page can launch Nextflow runs as your user.")
         hosts.add(f"{socketserver.socket.gethostname().lower()}:{port}")
     Handler.allowed_hosts = {h.lower() for h in hosts}
+    Handler.httpd = httpd
 
     url = f"http://{'127.0.0.1' if args.host in ('0.0.0.0', '') else args.host}:{port}/"
     Handler.allowed_hosts.add(urllib.parse.urlparse(url).netloc.lower())
-    print(f"HOMES dashboard running at {url}  (press Ctrl+C to stop)")
+    print(f"HOMES dashboard running at {url}  (press Ctrl+C or use Setup > Quit dashboard to stop)")
     if not args.no_browser:
-        threading.Timer(0.8, lambda: webbrowser.open(url)).start()
+        threading.Timer(0.8, lambda: open_window(url, window_mode)).start()
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

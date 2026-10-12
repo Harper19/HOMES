@@ -5,14 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="homes-token" content="__HOMES_TOKEN__">
   <title>HOMES Dashboard</title>
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0f7a5c">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="top">
     <div class="top-inner">
       <div class="brand">
-        <div class="brand-mark">H</div>
+        <img class="brand-mark" src="icon.svg" alt="">
         <div>HOMES Dashboard<small>Harmonizing 'Omics for Managing Environmental Systems</small></div>
       </div>
       <span id="conn" class="conn off">Checking…</span>
@@ -214,6 +217,18 @@
       <h2>Setup check</h2>
       <p class="muted">HOMES needs Java 17+, Nextflow and one container engine. This page checks this computer.</p>
       <div class="card" id="setup-checks"></div>
+      <div class="card server-only">
+        <h3>Dashboard app</h3>
+        <p class="muted">Open the dashboard like a normal program by double-clicking an icon. Run this once in the HOMES folder:</p>
+        <pre class="cmd">python3 dashboard/homes_dashboard.py --install-app</pre>
+        <p class="muted small" style="margin-top:8px">macOS: creates <b>HOMES Dashboard</b> in your Applications folder (drag it to the Dock).
+          Windows: a shortcut on the Desktop. Linux: an entry in the applications menu.
+          In Chrome or Edge you can also use the <i>Install</i> icon in the address bar.</p>
+        <div class="row" style="margin-top:12px">
+          <button class="btn danger" id="btn-quit">Quit dashboard</button>
+          <span class="muted small">Stops the dashboard. Analyses that are running keep going.</span>
+        </div>
+      </div>
       <div class="card">
         <h3>Install steps</h3>
         <h4>1. Docker (laptop / workstation)</h4>

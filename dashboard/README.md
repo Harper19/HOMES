@@ -15,14 +15,43 @@ From the HOMES folder:
 python3 dashboard/homes_dashboard.py
 ```
 
-A browser window opens at <http://127.0.0.1:8765>. Stop the dashboard with `Ctrl+C`; analyses that are
-already running keep going.
+The dashboard opens in its own window at <http://127.0.0.1:8765>. If Chrome, Edge, Chromium or Brave is
+installed, this is an app window without tabs or address bar; otherwise it opens in your default browser.
+Stop the dashboard with `Ctrl+C` or **Setup → Quit dashboard**; analyses that are already running keep going.
+
+## Use it like a desktop app
+
+Run this once from the HOMES folder:
+
+```bash
+python3 dashboard/homes_dashboard.py --install-app
+```
+
+| System | What gets created |
+| --- | --- |
+| macOS | `~/Applications/HOMES Dashboard.app` – open it from Finder, Spotlight or Launchpad, or drag it to the Dock. |
+| Windows | `HOMES Dashboard.bat` on the Desktop. |
+| Linux | A *HOMES Dashboard* entry in the applications menu. |
+
+Double-clicking starts the dashboard in the background and opens its window. If it is already running, the
+existing dashboard is reopened instead of starting a second one. The app points at this HOMES folder, so
+re-run `--install-app` if you move the folder. Messages from the dashboard are written to
+`.homes_dashboard/dashboard.log`.
+
+The app is started through your login shell (macOS) and also looks in the usual install folders
+(`~/.local/bin`, Homebrew, conda, Docker Desktop), so Nextflow and Docker are found even though no terminal
+is open.
+
+Without installing anything, you can also double-click one of the files in `dashboard/launchers/`
+(`HOMES Dashboard.command` on macOS, `HOMES Dashboard.bat` on Windows, `homes-dashboard.sh` on Linux).
+In Chrome or Edge you can additionally use the *Install* icon in the address bar to add the page as an app.
 
 Options:
 
 ```bash
 python3 dashboard/homes_dashboard.py --port 9000        # use another port
-python3 dashboard/homes_dashboard.py --no-browser       # don't open a browser automatically
+python3 dashboard/homes_dashboard.py --no-browser       # don't open a window automatically
+python3 dashboard/homes_dashboard.py --browser          # open in a normal browser tab instead of an app window
 ```
 
 On a remote server, keep the default address and use an SSH tunnel instead of opening the port:
@@ -55,11 +84,13 @@ need the Python server.
 
 ```text
 dashboard/
-  homes_dashboard.py     # local web server + run manager (stdlib only)
+  homes_dashboard.py     # local web server + run manager + app installer (stdlib only)
+  launchers/             # double-click launchers for macOS / Windows / Linux
   static/index.html      # page layout
   static/app.js          # dashboard logic
   static/workflows.js    # workflow catalogue: options, defaults, help texts, samplesheet layouts
   static/style.css       # styles (light and dark)
+  static/icon*.{svg,png}, static/manifest.webmanifest   # app icon and install metadata
 ```
 
 Run logs and dashboard state are stored in `.homes_dashboard/` in the HOMES folder (ignored by Git).
