@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 722" width="1300" height="722" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif">
+  <title>HOMES_metagenomics workflow</title>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1 L9 5 L1 9 z" fill="#57606A"/>
+    </marker>
+    <style>
+      .ttl{font-size:18px;font-weight:600;fill:#1F2328}
+      .sub{font-size:15px;fill:#59636E}
+      .mono{font-family:ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;font-size:14px}
+      .edge{fill:none;stroke:#57606A;stroke-width:1.8}
+      .elab{font-size:14px;fill:#59636E}
+      .box{fill:#FFFFFF;stroke-width:1.8}
+      .s1{stroke:#1A7F64}
+      .s2{stroke:#BC4C00}
+      .s3{stroke:#6639BA}
+      .io{stroke:#8C959F}
+      .sec{font-size:21px;font-weight:600}
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1300" height="722" rx="14" fill="#FFFFFF"/>
+
+  <text x="20" y="46" style="font-size:34px" font-weight="700" fill="#1F2328">HOMES_metagenomics</text>
+  <text x="20" y="78" style="font-size:17px" fill="#59636E">Unified Illumina and Nanopore shotgun metagenomics workflow</text>
+
+  <!-- Section 1 -->
+  <text x="20" y="118" class="sec" fill="#1A7F64">1. Read-level QC, taxonomy and abundance</text>
+  <rect x="20" y="130" width="1230" height="200" rx="10" fill="#F3FAF7" stroke="#1A7F64" stroke-width="1.3"/>
+
+  <rect class="box io" x="40" y="190" width="170" height="80" rx="8"/>
+  <text class="ttl" x="125" y="225" text-anchor="middle">Input FASTQ</text>
+  <text class="sub mono" x="125" y="250" text-anchor="middle">samplesheet.csv</text>
+
+  <path d="M290 182 L352 230 L290 278 L228 230 Z" fill="#FFFFFF" stroke="#1A7F64" stroke-width="1.8"/>
+  <text class="ttl" x="290" y="227" text-anchor="middle" style="font-size:17px">Platform</text>
+  <text class="sub mono" x="290" y="247" text-anchor="middle" style="font-size:13px">--platform</text>
+
+  <path class="edge" d="M210 230 H224" marker-end="url(#ah)"/>
+  <path class="edge" d="M352 230 H370 V190 H436" marker-end="url(#ah)"/>
+  <path class="edge" d="M370 230 V270 H436" marker-end="url(#ah)"/>
+  <text class="elab mono" x="402" y="182" text-anchor="middle" style="font-size:12px">illumina</text>
+  <text class="elab mono" x="402" y="262" text-anchor="middle" style="font-size:12px">nanopore</text>
+
+  <rect class="box s1" x="440" y="157" width="220" height="66" rx="8"/>
+  <text class="ttl" x="550" y="186" text-anchor="middle">Illumina read QC</text>
+  <text class="sub" x="550" y="208" text-anchor="middle">length, quality, N50</text>
+  <rect class="box s1" x="440" y="237" width="220" height="66" rx="8"/>
+  <text class="ttl" x="550" y="266" text-anchor="middle">Nanopore read QC</text>
+  <text class="sub" x="550" y="288" text-anchor="middle">length, quality, N50</text>
+
+  <path class="edge" d="M660 190 H696" marker-end="url(#ah)"/>
+  <path class="edge" d="M660 270 H696" marker-end="url(#ah)"/>
+
+  <rect class="box s1" x="700" y="157" width="230" height="66" rx="8"/>
+  <text class="ttl" x="815" y="186" text-anchor="middle">Kraken2 taxonomy</text>
+  <text class="sub" x="815" y="208" text-anchor="middle">optional Bracken abundance</text>
+  <rect class="box s1" x="700" y="237" width="230" height="66" rx="8"/>
+  <text class="ttl" x="815" y="266" text-anchor="middle">Kraken2 taxonomy</text>
+  <text class="sub" x="815" y="288" text-anchor="middle">optional Bracken abundance</text>
+
+  <path class="edge" d="M930 190 H960 V270 H930"/>
+  <path class="edge" d="M960 230 H991" marker-end="url(#ah)"/>
+
+  <rect class="box s3" x="995" y="185" width="240" height="90" rx="8"/>
+  <text class="ttl" x="1115" y="216" text-anchor="middle">Taxonomic outputs</text>
+  <text class="sub" x="1115" y="239" text-anchor="middle">QC, taxonomy,</text>
+  <text class="sub" x="1115" y="258" text-anchor="middle">abundance tables</text>
+
+  <!-- Section 2 -->
+  <text x="20" y="375" class="sec" fill="#BC4C00">2. Optional contig-based functional profiling<tspan class="mono" style="font-size:15px" font-weight="400" fill="#59636E" dx="12">--run_functional_annotation</tspan></text>
+  <rect x="20" y="387" width="1230" height="155" rx="10" fill="#FFF8F2" stroke="#BC4C00" stroke-width="1.3"/>
+
+  <rect class="box io" x="40" y="407" width="170" height="90" rx="8"/>
+  <text class="ttl" x="125" y="438" text-anchor="middle">Contigs FASTA</text>
+  <text class="sub" x="125" y="461" text-anchor="middle">HOMES_assembly</text>
+  <text class="sub" x="125" y="480" text-anchor="middle">or external</text>
+
+  <path d="M290 402 L358 452 L290 502 L222 452 Z" fill="#FFFFFF" stroke="#BC4C00" stroke-width="1.8"/>
+  <text class="ttl" x="290" y="449" text-anchor="middle" style="font-size:16px">Annotate?</text>
+  <text class="sub mono" x="290" y="469" text-anchor="middle" style="font-size:13px">true / false</text>
+
+  <path class="edge" d="M210 452 H220" marker-end="url(#ah)"/>
+  <path class="edge" d="M358 452 H391" marker-end="url(#ah)"/>
+  <text class="elab mono" x="374" y="443" text-anchor="middle" style="font-size:13px">true</text>
+  <path class="edge" d="M290 502 V524 H330" stroke-dasharray="5 4"/>
+  <text class="elab" x="338" y="529"><tspan class="mono" style="font-size:13px">false</tspan>: functional profiling skipped</text>
+
+  <rect class="box s2" x="395" y="419" width="140" height="66" rx="8"/>
+  <text class="ttl" x="465" y="448" text-anchor="middle">Prodigal</text>
+  <text class="sub" x="465" y="470" text-anchor="middle">gene prediction</text>
+
+  <path class="edge" d="M535 452 H566" marker-end="url(#ah)"/>
+
+  <rect class="box s2" x="570" y="407" width="210" height="90" rx="8"/>
+  <text class="ttl" x="675" y="438" text-anchor="middle">eggNOG-mapper</text>
+  <text class="sub" x="675" y="461" text-anchor="middle">COG, GO, EC, KEGG KO</text>
+  <text class="sub" x="675" y="480" text-anchor="middle">pathway, CAZy</text>
+
+  <path class="edge" d="M780 452 H811" marker-end="url(#ah)"/>
+
+  <rect class="box s2" x="815" y="419" width="180" height="66" rx="8"/>
+  <text class="ttl" x="905" y="448" text-anchor="middle">Minimap2</text>
+  <text class="sub" x="905" y="470" text-anchor="middle">read-to-gene mapping</text>
+
+  <path class="edge" d="M995 452 H1026" marker-end="url(#ah)"/>
+
+  <rect class="box s3" x="1030" y="407" width="205" height="90" rx="8"/>
+  <text class="ttl" x="1132" y="438" text-anchor="middle" style="font-size:16px">Functional abundance</text>
+  <text class="sub" x="1132" y="461" text-anchor="middle">gene / KO / EC</text>
+  <text class="sub" x="1132" y="480" text-anchor="middle">pathway tables</text>
+
+  <!-- Section 3 -->
+  <text x="20" y="586" class="sec" fill="#6639BA">3. Standardized outputs and HTML report</text>
+  <rect x="20" y="598" width="1230" height="104" rx="10" fill="#F8F5FD" stroke="#6639BA" stroke-width="1.3"/>
+
+  <path class="edge" d="M1235 230 H1275 V650 H1204" marker-end="url(#ah)"/>
+  <path class="edge" d="M1132 497 V606" marker-end="url(#ah)"/>
+
+  <rect class="box s3" x="880" y="610" width="320" height="80" rx="8"/>
+  <text class="ttl" x="1040" y="644" text-anchor="middle">HOMES HTML report</text>
+  <text class="sub" x="1040" y="668" text-anchor="middle">QC, taxonomy, abundance, function</text>
+
+  <path class="edge" d="M880 650 H844" marker-end="url(#ah)"/>
+
+  <rect class="box s3" x="40" y="610" width="800" height="80" rx="8"/>
+  <text class="ttl" x="440" y="644" text-anchor="middle">Published output folders</text>
+  <text class="sub mono" x="440" y="668" text-anchor="middle">qc/  ·  taxonomy/  ·  abundance/  ·  functional_annotation/  ·  report/</text>
+</svg>
