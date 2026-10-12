@@ -29,6 +29,19 @@ The project focuses on wastewater-industry needs: consistent sample tracking, po
 
 Workflow-level READMEs include samplesheet formats, test commands, output paths, database notes, and platform-specific options.
 
+### Two ways to run the same workflows
+
+There is one version of HOMES. You can drive it in either of two ways, and both run exactly the same workflows in `workflows/`:
+
+| | Command line | Dashboard |
+| --- | --- | --- |
+| For | Bioinformaticians, servers and HPC clusters | Anyone who prefers clicking to typing (laptop or workstation) |
+| How | `nextflow run workflows/HOMES_<name> ...` (see the module sections below) | `python3 dashboard/homes_dashboard.py`, or the installed **HOMES Dashboard** app – see [Dashboard](#dashboard-no-command-line) |
+| Results | Same output folders and HTML reports | Same output folders and HTML reports |
+
+The dashboard only builds and runs the normal `nextflow run` command for you, and shows that command so you can copy it. Nothing about the
+workflows changes, and command-line users can ignore the `dashboard/` folder.
+
 ## Installation
 
 HOMES workflows are run with [Nextflow](https://docs.seqera.io/nextflow/install) and software containers. For local runs, install Docker first; for shared servers/HPC, use the workflow-level `server_slurm` or `server_pbs` profiles with Singularity where available.
@@ -89,7 +102,9 @@ app (macOS Applications folder, Windows Desktop, or Linux applications menu).
 
 It opens in its own window and guides you through choosing a workflow, building a samplesheet (it can find
 and pair your FASTQ files automatically), starting the run, following its progress, and opening the HTML
-report. Remember to open Docker Desktop before each analysis. Disk space, memory and Windows (WSL2) notes are in
+report. The files in `dashboard/launchers/` (`.command` for macOS, `.bat` for Windows, `.sh` for Linux) are
+not separate versions: each is a few lines that open this same dashboard on that operating system.
+Remember to open Docker Desktop before each analysis. Disk space, memory and Windows (WSL2) notes are in
 [dashboard/README.md](dashboard/README.md#before-you-start).
 
 ## Amplicon Module

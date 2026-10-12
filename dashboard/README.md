@@ -4,6 +4,11 @@ A point-and-click web dashboard for the HOMES workflows. It is meant for people 
 Nextflow commands: pick an analysis, point it at your data, press **Start**, follow progress, and open the
 HTML report.
 
+The dashboard is not a separate version of HOMES. It runs the same workflows in `workflows/` with the same
+`nextflow run` command you would type yourself (it shows you that command), and writes the same results and
+reports. Command-line use is unchanged, so you can mix both: for example, prepare a run in the dashboard and
+copy its command to a server.
+
 It needs only Python 3.8+ (standard library, nothing to `pip install`) plus the usual HOMES requirements
 (Java 17+, Nextflow, Docker or Singularity).
 
@@ -82,6 +87,7 @@ is open.
 
 Without installing anything, you can also double-click one of the files in `dashboard/launchers/`
 (`HOMES Dashboard.command` on macOS, `HOMES Dashboard.bat` on Windows, `homes-dashboard.sh` on Linux).
+These three files do the same thing on different operating systems: they open this one dashboard.
 In Chrome or Edge you can additionally use the *Install* icon in the address bar to add the page as an app.
 
 Options:
