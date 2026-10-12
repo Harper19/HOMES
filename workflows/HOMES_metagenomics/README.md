@@ -24,7 +24,7 @@ Optional contig-based functional profiling is also available. Provide an assembl
 
 ## Workflow Figure
 
-![HOMES_metagenomics workflow](figure/HOMES_metagenomics_functional_workflow.png)
+![HOMES_metagenomics workflow](https://raw.githubusercontent.com/Harper19/HOMES/8acb54013ba85258a16d0d7e9e3f807af2b154fb/workflows/HOMES_metagenomics/figure/HOMES_metagenomics_functional_workflow.svg)
 
 The Mermaid source is stored in [`figure/homes_metagenomics_workflow.mmd`](figure/homes_metagenomics_workflow.mmd).
 
