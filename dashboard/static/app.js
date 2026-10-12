@@ -740,6 +740,8 @@
     [/exit status 137|OutOfMemory|Killed|out of memory/i, "A step ran out of memory. Close other programs, give Docker more memory (Docker Desktop → Settings → Resources), or run on a server."],
     [/Java version|requires Java|UnsupportedClassVersion/i, "Nextflow needs Java 17 or newer – see the Setup tab."],
     [/samplesheet|Samplesheet/, "There may be a problem with the samplesheet. Open it in the Samplesheet tab to check sample names and columns."],
+    [/Plugin with id .* not found|registry\.nextflow\.io|Failed to prefetch plugin/i, "Nextflow could not download its plugins (e.g. nf-schema). Check the internet connection; on a work network, ask IT to allow registry.nextflow.io, github.com and Docker Hub."],
+    [/toomanyrequests|429 Too Many Requests|pull rate limit/i, "Docker Hub is limiting downloads. Wait a few minutes and start again with Resume on, or sign in with `docker login`."],
     [/No space left on device/i, "The disk is full. Free some space (e.g. delete the work/ folder of old runs) and resume."],
   ];
 
