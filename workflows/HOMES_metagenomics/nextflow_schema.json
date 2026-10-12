@@ -135,6 +135,44 @@
                     "description": "Skip HOMES HTML report creation."
                 }
             }
+        },
+        "functional_annotation_options": {
+            "title": "Functional annotation options",
+            "type": "object",
+            "properties": {
+                "run_functional_annotation": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable contig-based functional gene annotation and per-sample functional abundance profiling."
+                },
+                "functional_contigs": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Metagenome contigs FASTA, for example the contigs output from HOMES_assembly. Required when run_functional_annotation is true."
+                },
+                "functional_annotation_tool": {
+                    "type": "string",
+                    "enum": ["eggnog", "native"],
+                    "default": "eggnog",
+                    "description": "Functional annotation tool. eggnog is the real analysis mode; native is reserved for lightweight tests."
+                },
+                "functional_mapping_tool": {
+                    "type": "string",
+                    "enum": ["minimap2", "native"],
+                    "default": "minimap2",
+                    "description": "Tool used to map sample reads to predicted genes. native is reserved for lightweight tests."
+                },
+                "eggnog_data_dir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Persistent eggNOG-mapper database directory. Defaults to HOMES/db/eggnog."
+                },
+                "download_functional_db": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Download the eggNOG database when it is absent. This database is large (about 45 GB) and is reused on later runs."
+                }
+            }
         }
     },
     "allOf": [
@@ -149,6 +187,9 @@
         },
         {
             "$ref": "#/definitions/report_options"
+        },
+        {
+            "$ref": "#/definitions/functional_annotation_options"
         }
     ]
 }

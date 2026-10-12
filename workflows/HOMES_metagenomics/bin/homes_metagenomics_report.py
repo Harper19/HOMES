@@ -64,6 +64,10 @@ def toc_html():
         ("taxonomy", "Taxonomy"),
         ("abundance-counts", "Abundance Counts"),
         ("relative-abundance", "Relative Abundance"),
+        ("functional-overview", "Functional Overview"),
+        ("functional-ko", "KO Abundance"),
+        ("functional-ec", "EC Abundance"),
+        ("functional-pathway", "Pathway Abundance"),
     ]
     links = "\n".join(f'<li><a href="#{anchor}">{html.escape(label)}</a></li>' for anchor, label in items)
     return f'<ul class="nav nav-pills nav-stacked">{links}</ul>'
@@ -216,6 +220,29 @@ def abundance_plot(rows):
     return "\n".join(out)
 
 
+def functional_plot(rows, term_key, title, section_id):
+    totals = {}
+    for row in rows:
+        try:
+            term = row.get(term_key, "")
+            totals[term] = totals.get(term, 0) + float(row.get("mapped_reads", 0))
+        except ValueError:
+            continue
+    ordered = sorted(((term, count) for term, count in totals.items() if term), key=lambda item: item[1], reverse=True)[:20]
+    if not ordered:
+        return f'<section id="{section_id}"><h2>{html.escape(title)}</h2><p>Functional profiling was not run or no annotated reads were detected.</p></section>'
+    maximum = max(count for _, count in ordered) or 1
+    parts = [f'<section id="{section_id}"><h2>{html.escape(title)}</h2><svg viewBox="0 0 920 {48 + 26 * len(ordered)}" role="img">', '<style>text{font-family:Arial,sans-serif;font-size:13px}.bar{fill:#5b3f9b}</style>']
+    for index, (term, count) in enumerate(ordered):
+        y = 32 + index * 26
+        width = max(1, count / maximum * 500)
+        parts.append(f'<text x="0" y="{y + 14}">{html.escape(term[:45])}</text>')
+        parts.append(f'<rect class="bar" x="280" y="{y}" width="{width:.2f}" height="18"></rect>')
+        parts.append(f'<text x="{288 + width:.2f}" y="{y + 14}">{count:.0f}</text>')
+    parts.append("</svg></section>")
+    return "\n".join(parts)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Build the HOMES metagenomics HTML report.")
     parser.add_argument("--platform", required=True)
@@ -225,6 +252,10 @@ def main():
     parser.add_argument("--taxonomy", nargs="*", default=[])
     parser.add_argument("--abundance", nargs="*", default=[])
     parser.add_argument("--relative_abundance", nargs="*", default=[])
+    parser.add_argument("--functional_annotations", nargs="*", default=[])
+    parser.add_argument("--functional_ko_abundance", nargs="*", default=[])
+    parser.add_argument("--functional_ec_abundance", nargs="*", default=[])
+    parser.add_argument("--functional_pathway_abundance", nargs="*", default=[])
     parser.add_argument("--logo")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
@@ -252,6 +283,19 @@ def main():
     relative_rows = []
     for path in args.relative_abundance:
         relative_rows.extend(read_tsv(path))
+
+    functional_annotation_rows = []
+    for path in args.functional_annotations:
+        functional_annotation_rows.extend(read_tsv(path))
+    functional_ko_rows = []
+    for path in args.functional_ko_abundance:
+        functional_ko_rows.extend(read_tsv(path))
+    functional_ec_rows = []
+    for path in args.functional_ec_abundance:
+        functional_ec_rows.extend(read_tsv(path))
+    functional_pathway_rows = []
+    for path in args.functional_pathway_abundance:
+        functional_pathway_rows.extend(read_tsv(path))
 
     platform = platform_label(args.platform)
     css = """
@@ -303,6 +347,14 @@ th{background:#f2f4f7}section{margin-bottom:22px}a{color:#24b064;text-decoration
 {table_html("Taxonomy", taxonomy_rows, "taxonomy")}
 {table_html("Abundance Counts", abundance_rows, "abundance-counts")}
 {table_html("Relative Abundance", relative_rows, "relative-abundance")}
+<section id="functional-overview">
+<h2>Functional Overview</h2>
+<p class="subtle">Functional annotations are generated from supplied metagenome contigs. KO, EC, and pathway abundance values are read mappings to predicted genes; they are absent when functional profiling was not enabled.</p>
+</section>
+{table_html("Gene Functional Annotations", functional_annotation_rows)}
+{functional_plot(functional_ko_rows, "kegg_ko", "KO Abundance", "functional-ko")}
+{functional_plot(functional_ec_rows, "ec_number", "EC Abundance", "functional-ec")}
+{functional_plot(functional_pathway_rows, "kegg_pathway", "Pathway Abundance", "functional-pathway")}
 </main>
 </body>
 </html>

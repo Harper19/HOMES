@@ -24,7 +24,7 @@ The project focuses on wastewater-industry needs: consistent sample tracking, po
 | Workflow | README | Platforms | Primary outputs |
 | --- | --- | --- | --- |
 | `HOMES_amplicon` | [workflows/HOMES_amplicon/README.md](workflows/HOMES_amplicon/README.md) | `--platform short`, `--platform nanopore` | QC, taxonomy, abundance, diversity, HTML report |
-| `HOMES_metagenomics` | [workflows/HOMES_metagenomics/README.md](workflows/HOMES_metagenomics/README.md) | `--platform illumina`, `--platform nanopore` | QC, Kraken2 taxonomy, abundance, HTML report |
+| `HOMES_metagenomics` | [workflows/HOMES_metagenomics/README.md](workflows/HOMES_metagenomics/README.md) | `--platform illumina`, `--platform nanopore` | QC, Kraken2 taxonomy, abundance, optional contig-based functional annotation, HTML report |
 | `HOMES_assembly` | [workflows/HOMES_assembly/README.md](workflows/HOMES_assembly/README.md) | `--platform illumina`, `--platform nanopore` | Trim/QC, contigs, bins, genome annotation, functional genes, HTML report |
 
 Workflow-level READMEs include samplesheet formats, test commands, output paths, database notes, and platform-specific options.

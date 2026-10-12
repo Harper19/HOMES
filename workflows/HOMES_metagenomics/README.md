@@ -20,6 +20,8 @@ results/HOMES_metagenomics/
 
 The workflow validates input, writes HOMES-normalized QC/taxonomy/abundance outputs, and creates an HTML report. The module layout is designed so additional analysis methods can be added without changing the public output paths.
 
+Optional contig-based functional profiling is also available. Provide an assembly FASTA through `--functional_contigs` and enable `--run_functional_annotation true`; HOMES predicts genes, uses eggNOG-mapper for COG/GO/EC/KO/pathway annotations, and maps each sample's reads to those genes for functional abundance tables. This is disabled by default because the eggNOG database is large.
+
 ## Workflow Figure
 
 ![HOMES_metagenomics workflow](figure/HOMES_metagenomics_workflow.png)

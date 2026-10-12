@@ -11,6 +11,10 @@ process METAGENOMICS_HTML_REPORT {
     path taxonomy
     path abundance
     path relative_abundance
+    path functional_annotations
+    path functional_ko_abundance
+    path functional_ec_abundance
+    path functional_pathway_abundance
     path report_logo
 
     output:
@@ -27,6 +31,10 @@ process METAGENOMICS_HTML_REPORT {
         --taxonomy ${taxonomy} \\
         --abundance ${abundance} \\
         --relative_abundance ${relative_abundance} \\
+        --functional_annotations ${functional_annotations} \\
+        --functional_ko_abundance ${functional_ko_abundance} \\
+        --functional_ec_abundance ${functional_ec_abundance} \\
+        --functional_pathway_abundance ${functional_pathway_abundance} \\
         --logo ${report_logo} \\
         --output HOMES_metagenomics.${platform}.report.html
 
@@ -39,7 +47,7 @@ process METAGENOMICS_HTML_REPORT {
     stub:
     """
     cat > HOMES_metagenomics.${platform}.report.html <<-END_REPORT
-    <!doctype html><html><head><meta charset="utf-8"><title>HOMES_metagenomics ${platform} report</title></head><body><h1>HOMES_metagenomics<br>${platform} report</h1><p>Stub report for QC, taxonomy, abundance, N50, length distribution, and Q value distribution outputs.</p></body></html>
+    <!doctype html><html><head><meta charset="utf-8"><title>HOMES_metagenomics ${platform} report</title></head><body><h1>HOMES_metagenomics<br>${platform} report</h1><p>Stub report for QC, taxonomy, abundance, and functional annotation outputs.</p></body></html>
     END_REPORT
 
     cat <<-END_VERSIONS > versions.yml

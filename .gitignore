@@ -40,6 +40,8 @@ db/
 !workflows/HOMES_metagenomics/assets/testdata/nanopore/test_data_2/*.fastq.gz
 !workflows/HOMES_metagenomics/assets/testdata/refs/
 !workflows/HOMES_metagenomics/assets/testdata/refs/host.fa
+!workflows/HOMES_metagenomics/assets/testdata/functional/
+!workflows/HOMES_metagenomics/assets/testdata/functional/*.fna
 
 # Temporary files
 tmp/

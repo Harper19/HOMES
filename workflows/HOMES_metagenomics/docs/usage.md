@@ -44,6 +44,29 @@ nextflow run workflows/HOMES_metagenomics \
 
 Nanopore mode is the long-read metagenomics branch. The current classifier is Kraken2 with optional Bracken abundance estimation; Minimap2 remains a planned option for custom references.
 
+## Functional Gene Annotation
+
+Functional profiling is intentionally off by default. It is contig-based: first run `HOMES_assembly`, or provide another metagenome assembly FASTA with `--functional_contigs`. In real analysis mode HOMES uses Prodigal gene prediction, eggNOG-mapper functional annotation, and Minimap2 to count each sample's reads against the predicted genes.
+
+```bash
+EGGNOG_DB="$PWD/db/eggnog"
+
+nextflow run workflows/HOMES_metagenomics \
+  -profile docker \
+  --platform nanopore \
+  --input samplesheet.csv \
+  --functional_contigs results/HOMES_assembly/assembly/HOMES_assembly.nanopore.contigs.fasta \
+  --run_functional_annotation true \
+  --functional_annotation_tool eggnog \
+  --functional_mapping_tool minimap2 \
+  --eggnog_data_dir "$EGGNOG_DB" \
+  --download_functional_db true \
+  --outdir results/HOMES_metagenomics_nanopore_functional \
+  -resume
+```
+
+The first run downloads the eggNOG data into `EGGNOG_DB`; later runs reuse it. The core database is about 45 GB, so use a server profile and adequate disk/RAM for non-trivial metagenomes. After it has been downloaded, use `--download_functional_db false` or omit the flag.
+
 ## Stub tests
 
 ```bash

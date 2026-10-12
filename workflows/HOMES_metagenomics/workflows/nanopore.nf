@@ -10,6 +10,8 @@ include { PREPARE_METAGENOMICS_DATABASE     } from '../modules/local/prepare_met
 include { METAGENOMICS_NORMALIZED_TABLES    } from '../modules/local/metagenomics_normalized_tables'
 include { METAGENOMICS_TAXONOMY_ABUNDANCE   } from '../modules/local/metagenomics_taxonomy_abundance'
 include { METAGENOMICS_HTML_REPORT          } from '../modules/local/metagenomics_html_report'
+include { METAGENOMICS_FUNCTIONAL_ANNOTATION } from '../modules/local/metagenomics_functional_annotation'
+include { METAGENOMICS_FUNCTIONAL_ABUNDANCE } from '../modules/local/metagenomics_functional_abundance'
 
 def homesMetagenomicsReadFiles(samplesheet_path) {
     def sheet = file(samplesheet_path)
@@ -53,6 +55,8 @@ workflow HOMES_METAGENOMICS_NANOPORE {
     main:
     ch_samplesheet = Channel.fromPath(params.input, checkIfExists: true)
     ch_read_files = Channel.value(homesMetagenomicsReadFiles(params.input))
+    functional_contigs = params.functional_contigs ?: "${projectDir}/assets/testdata/functional/META_FUNCTIONAL_CONTIGS_1.fna"
+    ch_functional_contigs = Channel.fromPath(functional_contigs, checkIfExists: true)
     database_preset = homesMetagenomicsDatabasePreset()
     resolved_database_url = params.database_url ?: (database_preset.database ?: '')
     resolved_taxonomy_url = params.taxonomy_url ?: (database_preset.taxonomy ?: '')
@@ -90,6 +94,23 @@ workflow HOMES_METAGENOMICS_NANOPORE {
         params.bracken_read_length,
         params.skip_taxonomy
     )
+    METAGENOMICS_FUNCTIONAL_ANNOTATION(
+        ch_functional_contigs,
+        'nanopore',
+        params.run_functional_annotation,
+        params.functional_annotation_tool,
+        params.eggnog_data_dir,
+        params.download_functional_db
+    )
+    METAGENOMICS_FUNCTIONAL_ABUNDANCE(
+        METAGENOMICS_FUNCTIONAL_ANNOTATION.out.genes_fna,
+        METAGENOMICS_FUNCTIONAL_ANNOTATION.out.annotations,
+        VALIDATE_METAGENOMICS_SAMPLESHEET.out.samplesheet,
+        'nanopore',
+        ch_read_files,
+        params.run_functional_annotation,
+        params.functional_mapping_tool
+    )
     METAGENOMICS_HTML_REPORT(
         'nanopore',
         METAGENOMICS_NORMALIZED_TABLES.out.qc,
@@ -98,6 +119,10 @@ workflow HOMES_METAGENOMICS_NANOPORE {
         METAGENOMICS_TAXONOMY_ABUNDANCE.out.taxonomy,
         METAGENOMICS_TAXONOMY_ABUNDANCE.out.abundance,
         METAGENOMICS_TAXONOMY_ABUNDANCE.out.relative_abundance,
+        METAGENOMICS_FUNCTIONAL_ANNOTATION.out.annotations,
+        METAGENOMICS_FUNCTIONAL_ABUNDANCE.out.ko_abundance,
+        METAGENOMICS_FUNCTIONAL_ABUNDANCE.out.ec_abundance,
+        METAGENOMICS_FUNCTIONAL_ABUNDANCE.out.pathway_abundance,
         file("${projectDir}/assets/homes_report_logo.svg", checkIfExists: true)
     )
 
